@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const controller = require("../controller/CUser");
+const controller = require("../controller/Cuser");
 const { body } = require("express-validator"); // 유효성 검증
+const passport = require("passport");
 
 // post /users/signup
 router.post(
@@ -45,4 +46,38 @@ router.post(
 
 // post /users/check-duplicate
 router.post("/check-duplicate", controller.checkDuplicate);
+
+// post /users/signin
+router.post("/signin", (req, res, next) => {
+    passport.authenticate("local", (authErr, userInfo, authFail) => {
+        // 로그인 에러, 로그인 유저정보, 로그인 실패
+        if (authErr) next(authErr);
+        if (!userInfo) {
+            return res.send({
+                loginSuccess: false,
+                message: authFail,
+            });
+        }
+        req.logIn(userInfo, (loginErr) => {
+            if (loginErr) {
+                next(loginErr);
+            }
+            res.send({ loginSuccess: true });
+        });
+    })(req, res, next);
+});
+
+// get /users/logout
+router.get("/logout", (req, res, next) => {
+    req.logout((err) => {
+        if (err) {
+            return next(err);
+        }
+        // 로그아웃 성공(현재의 세션상태를 session에 저장한 후 리다이렉트)
+        req.session.save((err) => {
+            return res.redirect("/");
+        });
+    });
+});
+
 module.exports = router;

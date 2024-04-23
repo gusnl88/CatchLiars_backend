@@ -1,5 +1,5 @@
 const { where } = require("sequelize");
-const { User } = require("..//models");
+const { User } = require("../models");
 const { validationResult } = require("express-validator"); // 유효성 검증
 
 // 중복검사

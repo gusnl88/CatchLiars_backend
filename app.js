@@ -13,6 +13,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
 
+app.use("/uploads", express.static(__dirname + "/uploads"));
+
 // route 설정
 app.use(serverPrefix, indexRouter); // index.js
 app.use(serverPrefix + "users", userRouter);

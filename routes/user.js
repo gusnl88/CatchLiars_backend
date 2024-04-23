@@ -48,36 +48,9 @@ router.post(
 router.post("/check-duplicate", controller.checkDuplicate);
 
 // post /users/signin
-router.post("/signin", (req, res, next) => {
-    passport.authenticate("local", (authErr, userInfo, authFail) => {
-        // 로그인 에러, 로그인 유저정보, 로그인 실패
-        if (authErr) next(authErr);
-        if (!userInfo) {
-            return res.send({
-                loginSuccess: false,
-                message: authFail,
-            });
-        }
-        req.logIn(userInfo, (loginErr) => {
-            if (loginErr) {
-                next(loginErr);
-            }
-            res.send({ loginSuccess: true });
-        });
-    })(req, res, next);
-});
+router.post("/signin", controller.postSignin);
 
 // get /users/logout
-router.get("/logout", (req, res, next) => {
-    req.logout((err) => {
-        if (err) {
-            return next(err);
-        }
-        // 로그아웃 성공(현재의 세션상태를 session에 저장한 후 리다이렉트)
-        req.session.save((err) => {
-            return res.redirect("/");
-        });
-    });
-});
+router.get("/logout", controller.getLogout);
 
 module.exports = router;

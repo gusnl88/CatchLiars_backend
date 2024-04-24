@@ -8,11 +8,25 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
 
 const UserModel = require("./User")(sequelize, Sequelize);
 const GameModel = require("./Game")(sequelize, Sequelize);
+const FriendModel = require("./Friend")(sequelize, Sequelize);
+const InvitationModel = require("./Invitation")(sequelize, Sequelize);
+
+UserModel.hasMany(FriendModel, {
+    sourceKey: "u_seq",
+    foreignKey: "u_seq",
+});
+
+UserModel.hasMany(InvitationModel, {
+    sourceKey: "u_seq",
+    foreignKey: "u_seq",
+});
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
 db.User = UserModel;
 db.Game = GameModel;
+db.Friend = FriendModel;
+db.Invitation = InvitationModel;
 
 module.exports = db;

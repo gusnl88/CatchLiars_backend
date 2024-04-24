@@ -1,4 +1,3 @@
-const { where } = require("sequelize");
 const { User } = require("../models");
 const { validationResult } = require("express-validator"); // 유효성 검증
 const passport = require("passport");
@@ -42,7 +41,7 @@ exports.postSignup = async (req, res) => {
             nickname,
             score: 0,
             connect: 0,
-            image: "",
+            image: null,
         });
         res.send(true);
     } catch {

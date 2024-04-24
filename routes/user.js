@@ -4,7 +4,7 @@ const controller = require("../controller/Cuser");
 const { body } = require("express-validator"); // 유효성 검증
 const passport = require("passport");
 
-// post /users/signup
+// 회원가입
 router.post(
     "/signup",
     [
@@ -44,13 +44,13 @@ router.post(
     controller.postSignup
 );
 
-// post /users/check-duplicate
+// 중복검사
 router.post("/check-duplicate", controller.checkDuplicate);
 
-// post /users/signin
+// 로그인
 router.post("/signin", controller.postSignin);
 
-// get /users/logout
+// 로그아웃
 router.get("/logout", controller.getLogout);
 
 module.exports = router;

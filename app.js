@@ -7,10 +7,11 @@ const PORT = process.env.PORT;
 const { sequelize } = require("./models");
 const indexRouter = require("./routes");
 const userRouter = require("./routes/user");
+const gameRouter = require("./routes/game");
 const serverPrefix = "/";
 const session = require("express-session");
 const passport = require("passport");
-const { User } = require("./models");
+const { User, Game } = require("./models");
 const LocalStrategy = require("passport-local").Strategy; // 로그인 진행 방식
 
 // body-parser 설정
@@ -86,6 +87,7 @@ passport.deserializeUser(async (inputId, cb) => {
 // route 설정
 app.use(serverPrefix, indexRouter); // index.js
 app.use(serverPrefix + "users", userRouter);
+app.use(serverPrefix + "games", gameRouter);
 
 sequelize
     .sync({ force: false })

@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const controller = require("../controller/CUser");
+const controller = require("../controller/Cuser");
 const { body } = require("express-validator"); // 유효성 검증
+const passport = require("passport");
 
 // post /users/signup
 router.post(
@@ -45,4 +46,11 @@ router.post(
 
 // post /users/check-duplicate
 router.post("/check-duplicate", controller.checkDuplicate);
+
+// post /users/signin
+router.post("/signin", controller.postSignin);
+
+// get /users/logout
+router.get("/logout", controller.getLogout);
+
 module.exports = router;

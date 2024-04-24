@@ -36,8 +36,7 @@ const User = (Sequelize, DataTypes) => {
             },
             image: {
                 type: DataTypes.STRING(250),
-                allowNull: false,
-                defaultValue: "", // 랜덤 이미지로 수정 예정
+                allowNull: true,
             },
         },
         {

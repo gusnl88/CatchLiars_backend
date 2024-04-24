@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const controller = require("../controller/Cuser");
 const { body } = require("express-validator"); // 유효성 검증
-const passport = require("passport");
 
 // 회원가입
 router.post(

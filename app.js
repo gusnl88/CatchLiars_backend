@@ -8,10 +8,12 @@ const { sequelize } = require("./models");
 const indexRouter = require("./routes");
 const userRouter = require("./routes/user");
 const gameRouter = require("./routes/game");
+const friendRouter = require("./routes/friend");
+const invitationRouter = require("./routes/invitation");
 const serverPrefix = "/";
 const session = require("express-session");
 const passport = require("passport");
-const { User, Game } = require("./models");
+const { User } = require("./models");
 const LocalStrategy = require("passport-local").Strategy; // 로그인 진행 방식
 
 // body-parser 설정
@@ -49,6 +51,7 @@ passport.use(
                 },
             });
             if (userId) {
+                console.log("=============???????????????", userId);
                 // 일치하는 아이디가 있는 경우에만 비밀번호 확인
                 const userInfo = await User.findOne({
                     where: {
@@ -69,28 +72,30 @@ passport.use(
 
 // 로그인 성공시, 유저 정보를 session에 저장
 passport.serializeUser((userInfo, cb) => {
-    cb(null, userInfo.id);
+    cb(null, { userInfo });
 });
 
 // session에 저장된 사용자 정보 검증
-passport.deserializeUser(async (inputId, cb) => {
+passport.deserializeUser(async (userInfo, cb) => {
     try {
-        const userInfo = await User.findOne({
+        const userId = userInfo.userInfo.id;
+        const user = await User.findOne({
             where: {
-                id: inputId,
+                id: userId,
             },
         });
-        if (userInfo) cb(null, userInfo);
+        if (user) cb(null, user);
     } catch (err) {
         console.log(err);
     }
 });
 
-
 // route 설정
 app.use(serverPrefix, indexRouter); // index.js
 app.use(serverPrefix + "users", userRouter);
 app.use(serverPrefix + "games", gameRouter);
+app.use(serverPrefix + "friends", friendRouter);
+app.use(serverPrefix + "invites", invitationRouter);
 
 sequelize
     .sync({ force: false })

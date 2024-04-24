@@ -1,8 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const controller = require("../controller/CMain");
+const controller = require("../controller/Cmain");
 const multer = require("../middleware/upload");
-
 
 // GET /
 router.get("/", controller.getIndex);

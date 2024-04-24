@@ -9,7 +9,11 @@ router.post("/", controller.postGame);
 router.get("/:type", controller.getGame);
 
 // 게임방 설정 변경
-router.patch("/:g_seq", controller.patchGame);
+router.patch("/setting/:g_seq", controller.patchGameSetting);
+
+// 게임방 인원 변경
+router.patch("/plus/:g_seq", controller.patchPlus);
+router.patch("/minus/:g_seq", controller.patchMinus);
 
 // 게임방 삭제
 router.delete("/:g_seq", controller.deleteGame);

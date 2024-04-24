@@ -18,6 +18,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
 
+app.use("/uploads", express.static(__dirname + "/uploads"));
+
 // session middleware
 app.use(
     session({
@@ -82,6 +84,7 @@ passport.deserializeUser(async (inputId, cb) => {
         console.log(err);
     }
 });
+
 
 // route 설정
 app.use(serverPrefix, indexRouter); // index.js

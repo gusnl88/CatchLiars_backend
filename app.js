@@ -12,14 +12,22 @@ const friendRouter = require("./routes/friend");
 const invitationRouter = require("./routes/invitation");
 const serverPrefix = "/";
 const session = require("express-session");
+const cookieParser = require("cookie-parser");
 const passport = require("passport");
+const bcrypt = require("bcrypt");
 const { User } = require("./models");
 const LocalStrategy = require("passport-local").Strategy; // 로그인 진행 방식
 
 // body-parser 설정
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(cors());
+app.use(cookieParser());
+app.use(
+    cors({
+        origin: "http://localhost:3000", // 클라이언트의 주소
+        credentials: true, // 쿠키 허용
+    })
+);
 
 app.use("/uploads", express.static(__dirname + "/uploads"));
 
@@ -31,6 +39,7 @@ app.use(
         saveUninitialized: false,
         cookie: {
             maxAge: 1000 * 60 * 60,
+            httpOnly: true,
         },
     })
 );
@@ -70,20 +79,21 @@ passport.use(
 );
 
 // 로그인 성공시, 유저 정보를 session에 저장
-passport.serializeUser((userInfo, cb) => {
-    cb(null, { userInfo });
+// 초기 로그인 시에 실행
+passport.serializeUser((user, cb) => {
+    cb(null, user.id); // 로그인 성공시 deserializeUser에 user.id 전송
 });
 
 // session에 저장된 사용자 정보 검증
-passport.deserializeUser(async (userInfo, cb) => {
+// 매 요청시에 실행
+passport.deserializeUser(async (inputId, cb) => {
     try {
-        const userId = userInfo.userInfo.id;
         const user = await User.findOne({
             where: {
-                id: userId,
+                id: inputId,
             },
         });
-        if (user) cb(null, user);
+        if (user) cb(null, user); // db에서 해당 유저를 찾아서 리턴
     } catch (err) {
         console.log(err);
     }

@@ -4,12 +4,11 @@ const { Friend, User } = require("../models");
 // 친구 목록 조회
 exports.getFriend = async (req, res) => {
     const nowUser = req.session.passport; // 현재 유저 확인
-
-    if (nowUser) {
+    if (nowUser.user === req.user.dataValues.id) {
         try {
             const friendList = await Friend.findAll({
                 where: {
-                    u_seq: nowUser.user.userInfo.u_seq,
+                    u_seq: req.user.dataValues.u_seq,
                 },
                 attributes: ["c_seq"],
                 order: [["f_seq", "DESC"]],
@@ -37,12 +36,12 @@ exports.getFriend = async (req, res) => {
 exports.deleteFriend = async (req, res) => {
     const nowUser = req.session.passport; // 현재 유저 확인
     const { f_seq } = req.body;
-    if (nowUser) {
+    if (nowUser.user === req.user.dataValues.id) {
         try {
             const friend = await Friend.destroy({
                 where: {
                     f_seq,
-                    u_seq: nowUser.user.userInfo.u_seq,
+                    u_seq: req.user.dataValues.u_seq,
                 },
             });
             if (friend) res.send(true);

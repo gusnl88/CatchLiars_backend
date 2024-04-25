@@ -5,7 +5,7 @@ const { Game } = require("../models");
 exports.postGame = async (req, res) => {
     const { title, pw, type } = req.body;
     const nowUser = req.session.passport; // 현재 유저 확인
-    if (nowUser) {
+    if (nowUser.user === req.user.dataValues.id) {
         try {
             await Game.create({
                 g_seq: null,
@@ -45,7 +45,7 @@ exports.patchGameSetting = async (req, res) => {
     const { g_seq } = req.params;
     const { title, pw } = req.body;
     const nowUser = req.session.passport; // 현재 유저 확인
-    if (nowUser) {
+    if (nowUser.user === req.user.dataValues.id) {
         try {
             await Game.update(
                 {

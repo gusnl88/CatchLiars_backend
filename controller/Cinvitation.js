@@ -2,9 +2,10 @@ const { Invitation, Friend } = require("../models");
 
 // 초대 발송
 exports.postInvitation = async (req, res) => {
+    var last_g_seq;
     const { u_seq, type, g_seq } = req.body; // 친구의 u_seq
     if (g_seq === "") {
-        var last_g_seq = null;
+        last_g_seq = null;
     } else {
         last_g_seq = g_seq;
     }
@@ -13,6 +14,20 @@ exports.postInvitation = async (req, res) => {
 
     if (nowUser) {
         // 로그인된 사용자가 있을 경우
+        if (!type) {
+            // 친구신청
+            const friend = await Friend.findOne({
+                where: {
+                    u_seq: nowUser.user.userInfo.u_seq,
+                    c_seq: u_seq,
+                },
+            });
+
+            if (friend) {
+                // 이미 친구인 경우
+                res.send("이미 존재하는 친구입니다.");
+            }
+        }
         await Invitation.create({
             u_seq,
             f_seq: nowUser.user.userInfo.u_seq,
@@ -23,32 +38,41 @@ exports.postInvitation = async (req, res) => {
     } else {
         return res.send("로그인이 필요합니다.");
     }
-    // 이미 친구가 맺어진 상태인지 확인
-    res.end();
 };
 
 // 초대 수락
 exports.acceptInvitation = async (req, res) => {
-    const { f_seq, type } = req.body;
+    const { f_seq, type } = req.body; // 송신자, 초대 유형
 
     const nowUser = req.session.passport; // 현재 유저 확인
 
     if (nowUser) {
-        if (type === 0) {
-            // 친구초대 수락 -> 친구 생성
-            try {
-                await Friend.create({
-                    // 수신자 친구생성
+        if (type == 0) {
+            // 친구초대 수락시, 기존에 이미 있는 친구인지 확인
+            const friend = await Friend.findOne({
+                where: {
                     u_seq: nowUser.user.userInfo.u_seq,
                     c_seq: f_seq,
-                });
-                await Friend.create({
-                    // 송신자 친구생성
-                    u_seq: f_seq,
-                    c_seq: nowUser.user.userInfo.u_seq,
-                });
-            } catch {
-                res.status(500).send("server error");
+                },
+            });
+            if (friend) {
+                res.send("이미 존재하는 친구입니다.");
+            } else {
+                try {
+                    await Friend.create({
+                        // 수신자 친구생성
+                        u_seq: nowUser.user.userInfo.u_seq,
+                        c_seq: f_seq,
+                    });
+                    await Friend.create({
+                        // 송신자 친구생성
+                        u_seq: f_seq,
+                        c_seq: nowUser.user.userInfo.u_seq,
+                    });
+                    res.send(true);
+                } catch {
+                    res.status(500).send("server error");
+                }
             }
         }
     } else {
@@ -95,7 +119,6 @@ exports.getInvitation = async (req, res) => {
             });
             res.send(invitationList);
         } catch (error) {
-            console.log("error::", error);
             res.status(500).send("server error");
         }
     } else {

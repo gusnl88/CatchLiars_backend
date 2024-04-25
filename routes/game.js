@@ -6,7 +6,7 @@ const controller = require("../controller/Cgame");
 router.post("/", controller.postGame);
 
 // 게임 전체 목록 조회
-router.get("/:type", controller.getGame);
+router.get("/list/:type", controller.getGame);
 
 // 게임방 설정 변경
 router.patch("/setting/:g_seq", controller.patchGameSetting);

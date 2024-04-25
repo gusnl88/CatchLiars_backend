@@ -51,7 +51,6 @@ passport.use(
                 },
             });
             if (userId) {
-                console.log("=============???????????????", userId);
                 // 일치하는 아이디가 있는 경우에만 비밀번호 확인
                 const userInfo = await User.findOne({
                     where: {

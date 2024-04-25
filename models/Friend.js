@@ -8,6 +8,10 @@ const Friend = (Sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
+            c_seq: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
+            },
         },
         {
             tableName: "friend",

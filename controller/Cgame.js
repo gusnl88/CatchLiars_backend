@@ -1,30 +1,27 @@
-const { where } = require("sequelize");
 const { Game } = require("../models");
 
 // 게임방 생성
 // post /games
 exports.postGame = async (req, res) => {
     const { title, pw, type } = req.body;
-    var state = 1;
-    if (pw) {
-        // 비밀번호가 있을 경우, 진입 불가
-        state = 0;
-    }
-    try {
-        await Game.create({
-            g_seq: null,
-            g_title: title,
-            g_pw: pw,
-            g_type: type,
-            g_total: 1,
-            g_state: state,
-        });
-        res.send(true);
-    } catch {
-        res.status(500).send("server error");
+    const nowUser = req.session.passport; // 현재 유저 확인
+    if (nowUser) {
+        try {
+            await Game.create({
+                g_seq: null,
+                g_title: title,
+                g_pw: pw,
+                g_type: type,
+            });
+            res.send(true);
+        } catch (error) {
+            console.log("error", error);
+            res.status(500).send("server error");
+        }
+    } else {
+        res.send("로그인이 필요합니다.");
     }
 };
-
 // 게임방 전체 목록 조회
 // get /games/:type
 exports.getGame = async (req, res) => {
@@ -47,20 +44,24 @@ exports.getGame = async (req, res) => {
 exports.patchGameSetting = async (req, res) => {
     const { g_seq } = req.params;
     const { title, pw } = req.body;
-
-    try {
-        await Game.update(
-            {
-                g_title: title,
-                g_pw: pw,
-            },
-            {
-                where: { g_seq },
-            }
-        );
-        res.send(true);
-    } catch {
-        res.status(500).send("server error");
+    const nowUser = req.session.passport; // 현재 유저 확인
+    if (nowUser) {
+        try {
+            await Game.update(
+                {
+                    g_title: title,
+                    g_pw: pw,
+                },
+                {
+                    where: { g_seq },
+                }
+            );
+            res.send(true);
+        } catch {
+            res.status(500).send("server error");
+        }
+    } else {
+        res.send("로그인이 필요합니다.");
     }
 };
 

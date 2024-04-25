@@ -16,7 +16,17 @@ UserModel.hasMany(FriendModel, {
     foreignKey: "u_seq",
 });
 
+FriendModel.belongsTo(UserModel, {
+    sourceKey: "u_seq",
+    foreignKey: "u_seq",
+});
+
 UserModel.hasMany(InvitationModel, {
+    sourceKey: "u_seq",
+    foreignKey: "u_seq",
+});
+
+InvitationModel.belongsTo(UserModel, {
     sourceKey: "u_seq",
     foreignKey: "u_seq",
 });

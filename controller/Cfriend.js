@@ -1,4 +1,3 @@
-const { Sequelize } = require("sequelize");
 const { Friend, User } = require("../models");
 
 // 친구 목록 조회
@@ -35,16 +34,25 @@ exports.getFriend = async (req, res) => {
 // 친구 삭제하기
 exports.deleteFriend = async (req, res) => {
     const nowUser = req.session.passport; // 현재 유저 확인
-    const { f_seq } = req.body;
+    const { c_seq } = req.body;
+    const userInfo = req.user.dataValues;
     if (nowUser.user === req.user.dataValues.id) {
         try {
-            const friend = await Friend.destroy({
+            // 삭제를 한 유저
+            const friend1 = await Friend.destroy({
                 where: {
-                    f_seq,
-                    u_seq: req.user.dataValues.u_seq,
+                    u_seq: userInfo.u_seq,
+                    c_seq: c_seq,
                 },
             });
-            if (friend) res.send(true);
+            // 삭제를 당한 유저
+            const friend2 = await Friend.destroy({
+                where: {
+                    u_seq: c_seq,
+                    c_seq: userInfo.u_seq,
+                },
+            });
+            if (friend1 && friend2) res.send(true);
             else res.send(false);
         } catch {
             res.status(500).send("server error");

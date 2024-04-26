@@ -53,14 +53,25 @@ router.post("/signin", controller.postSignin);
 // 로그아웃
 router.get("/logout", controller.getLogout);
 
-// 마이페이지관련
+// 유저 접속 업데이트
+router.patch("/state", controller.patchUserState);
+
 // 프로필 목록
 router.get("/myPage", controller.getProfile);
+
 // 프로필 수정
 router.post("/myPage", controller.postProfile);
+
 // 이미지 수정deleteUser
 router.post("/editUser", multer.uploadProfile.single("fileInput"), controller.editUser);
+
 // // 탈퇴하기
 // router.post("/deleteUser", controller.deleteUser);
+
+// 유저 랭킹 목록
+router.get("/lank", controller.getLank);
+
+// 유저 스코어 업데이트
+router.patch("/score", controller.patchScore);
 
 module.exports = router;

@@ -7,13 +7,13 @@ exports.postGame = async (req, res) => {
     const nowUser = req.session.passport; // 현재 유저 확인
     if (nowUser.user === req.user.dataValues.id) {
         try {
-            await Game.create({
+            const gameInfo = await Game.create({
                 g_seq: null,
                 g_title: title,
                 g_pw: pw,
                 g_type: type,
             });
-            res.send(true);
+            res.send(gameInfo);
         } catch (error) {
             console.log("error", error);
             res.status(500).send("server error");
@@ -22,6 +22,7 @@ exports.postGame = async (req, res) => {
         res.send("로그인이 필요합니다.");
     }
 };
+
 // 게임방 전체 목록 조회
 // get /games/:type
 exports.getGame = async (req, res) => {

@@ -12,13 +12,13 @@ exports.postInvitation = async (req, res) => {
 
     const nowUser = req.session.passport; // 현재 유저 확인
 
-    if (nowUser) {
+    if (nowUser.user === req.user.dataValues.id) {
         // 로그인된 사용자가 있을 경우
         if (!type) {
             // 친구신청
             const friend = await Friend.findOne({
                 where: {
-                    u_seq: nowUser.user.userInfo.u_seq,
+                    u_seq: req.user.dataValues.u_seq,
                     c_seq: u_seq,
                 },
             });
@@ -30,7 +30,7 @@ exports.postInvitation = async (req, res) => {
         }
         await Invitation.create({
             u_seq,
-            f_seq: nowUser.user.userInfo.u_seq,
+            f_seq: req.user.dataValues.u_seq,
             g_seq: last_g_seq,
             i_type: type,
         });
@@ -46,12 +46,12 @@ exports.acceptInvitation = async (req, res) => {
 
     const nowUser = req.session.passport; // 현재 유저 확인
 
-    if (nowUser) {
+    if (nowUser.user === req.user.dataValues.id) {
         if (type == 0) {
             // 친구초대 수락시, 기존에 이미 있는 친구인지 확인
             const friend = await Friend.findOne({
                 where: {
-                    u_seq: nowUser.user.userInfo.u_seq,
+                    u_seq: req.user.dataValues.u_seq,
                     c_seq: f_seq,
                 },
             });
@@ -61,13 +61,13 @@ exports.acceptInvitation = async (req, res) => {
                 try {
                     await Friend.create({
                         // 수신자 친구생성
-                        u_seq: nowUser.user.userInfo.u_seq,
+                        u_seq: req.user.dataValues.u_seq,
                         c_seq: f_seq,
                     });
                     await Friend.create({
                         // 송신자 친구생성
                         u_seq: f_seq,
-                        c_seq: nowUser.user.userInfo.u_seq,
+                        c_seq: req.user.dataValues.u_seq,
                     });
                     res.send(true);
                 } catch {
@@ -85,12 +85,12 @@ exports.deleteInvitation = async (req, res) => {
     const { i_seq } = req.body;
 
     const nowUser = req.session.passport; // 현재 유저 확인
-    if (nowUser) {
+    if (nowUser.user === req.user.dataValues.id) {
         try {
             const invitation = await Invitation.destroy({
                 where: {
                     i_seq,
-                    u_seq: nowUser.user.userInfo.u_seq,
+                    u_seq: req.user.dataValues.u_seq,
                 },
             });
             if (invitation) res.send(true);
@@ -108,12 +108,12 @@ exports.deleteInvitation = async (req, res) => {
 exports.getInvitation = async (req, res) => {
     const { type } = req.params; // 0: 친구초대 1: 게임초대
     const nowUser = req.session.passport; // 현재 유저 확인
-    if (nowUser) {
+    if (nowUser.user === req.user.dataValues.id) {
         try {
             const invitationList = await Invitation.findAll({
                 where: {
                     i_type: type,
-                    u_seq: nowUser.user.userInfo.u_seq,
+                    u_seq: req.user.dataValues.u_seq,
                 },
                 order: [["i_seq", "DESC"]],
             });

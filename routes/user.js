@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const controller = require("../controller/Cuser");
 const { body } = require("express-validator"); // 유효성 검증
+const multer = require("../middleware/upload");
 
 // 회원가입
 router.post(
@@ -51,5 +52,15 @@ router.post("/signin", controller.postSignin);
 
 // 로그아웃
 router.get("/logout", controller.getLogout);
+
+// 마이페이지관련
+// 프로필 목록
+router.get("/myPage", controller.getProfile);
+// 프로필 수정
+router.post("/myPage", controller.postProfile);
+// 이미지 수정deleteUser
+router.post("/editUser", multer.uploadProfile.single("fileInput"), controller.editUser);
+// // 탈퇴하기
+// router.post("/deleteUser", controller.deleteUser);
 
 module.exports = router;

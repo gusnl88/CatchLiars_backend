@@ -81,3 +81,95 @@ exports.getLogout = (req, res) => {
         });
     });
 };
+
+// mypage관련
+exports.getProfile = async (req, res) => {
+    try {
+        if (req.session.id) {
+            const userData = await model.User.findOne({
+                where: { u_seq: req.session.data.u_seq },
+            });
+            res.status(200).json(userData);
+        } else {
+            res.status(401).json({ message: "로그인이 필요합니다." });
+        }
+    } catch (error) {
+        console.error("프로필 조회 실패", error);
+        res.status(500).json({ message: "프로필 조회 실패" });
+    }
+};
+exports.postProfile = (req, res) => {
+    model.User.findOne({
+        where: {
+            id: req.session.id,
+        },
+    })
+        .then((result) => {
+            if (!result) {
+                return res.status(404).send("사용자 정보를 찾을 수 없습니다.");
+            }
+            // console.log("프로필페이지", result);
+            res.render("profileEdit", { data: result });
+        })
+        .catch(() => {
+            //console.log("프로필 조회 실패");
+            res.send(500).send("프로필 조회 실패");
+        });
+};
+exports.editUser = async (req, res) => {
+    try {
+        const loggedInUserID = req.session.id;
+        const userIDFromClient = req.body.id;
+        if (loggedInUserID !== userIDFromClient) {
+            return res.status(403).send("권한이 없습니다.");
+        }
+
+        const updatedUser = {
+            pw: hashPW(req.body.pw),
+            nickname: req.body.nickname,
+            email: req.body.email,
+            image: req.file ? req.file.path : null, // 파일이 있으면 경로 저장, 없으면 null
+        };
+
+        await model.User.update(updatedUser, { where: { id: loggedInUserID } });
+        req.session.data.image = updatedUser.image;
+        return res.redirect("/myPage");
+    } catch (error) {
+        console.error("프로필 정보 업데이트 실패", error);
+        return res.status(500).send("프로필 정보 업데이트 실패");
+    }
+};
+
+exports.uploadProfile = (req, res) => {
+    console.log(req.file); // 파일 정보
+    console.log(req.body); // 텍스트 정보
+    res.send("파일 업로드 완료");
+};
+
+// // 탈퇴하기
+// exports.deleteUser = (req, res) => {
+//     const user = req.session.id;
+//     const userIDFromClient = req.body.id;
+
+//     if (user !== userIDFromClient) {
+//         return res.status(403).send("권한이 없습니다.");
+//     }
+
+//     model.User.destroy({
+//         where: { id: u_seq },
+//     })
+//         .then(() => {
+//             req.session.destroy((err) => {
+//                 if (err) {
+//                     console.error("세션 삭제 실패:", err);
+//                     return res.status(500).send("서버에러");
+//                 }
+//                 res.clearCookie("sessionID");
+//                 res.redirect("/");
+//             });
+//         })
+//         .catch((err) => {
+//             console.error("회원 탈퇴 실패:", err);
+//             res.status(500).send("회원 탈퇴 실패");
+//         });
+// };

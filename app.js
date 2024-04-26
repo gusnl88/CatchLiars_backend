@@ -8,15 +8,18 @@ const { sequelize } = require("./models");
 const indexRouter = require("./routes");
 const userRouter = require("./routes/user");
 const gameRouter = require("./routes/game");
+const dmRouter = require("./routes/dm");
+// const AlarmRouter = require("./router/alarm");
 const friendRouter = require("./routes/friend");
 const invitationRouter = require("./routes/invitation");
 const serverPrefix = "/";
 const session = require("express-session");
 const cookieParser = require("cookie-parser");
 const passport = require("passport");
+const { User, Game, DM, Message, Alarm } = require("./models");
 const bcrypt = require("bcrypt");
-const { User } = require("./models");
 const LocalStrategy = require("passport-local").Strategy; // 로그인 진행 방식
+const socketHandler = require("./sockets");
 
 // body-parser 설정
 app.use(express.urlencoded({ extended: true }));
@@ -106,12 +109,15 @@ app.use(serverPrefix + "games", gameRouter);
 app.use(serverPrefix + "friends", friendRouter);
 app.use(serverPrefix + "invites", invitationRouter);
 
+// sequelize를 통해 데이터베이스 연결
 sequelize
     .sync({ force: false })
     .then(() => {
-        app.listen(PORT, () => {
+        const server = app.listen(PORT, () => {
             console.log(`http://localhost:${PORT}`);
         });
+        // 수정된 부분: socketHandler 호출 시 server 객체 전달
+        socketHandler(server); // 여기서 socketHandler를 호출합니다.
     })
     .catch((err) => {
         console.log(err);

@@ -8,11 +8,32 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
 
 const UserModel = require("./User")(sequelize, Sequelize);
 const GameModel = require("./Game")(sequelize, Sequelize);
+const DmModel = require("./DM")(sequelize, Sequelize);
+const MessageModel = require("./Message")(sequelize, Sequelize);
+const AlarmModel = require("./Alarm")(sequelize, Sequelize);
+
+// foreignKey 연결
+// DM
+UserModel.hasMany(DmModel, { foreignKey: "u_seq" });
+DmModel.belongsTo(UserModel, { foreignKey: "u_seq" });
+UserModel.hasMany(DmModel, { foreignKey: "f_seq" });
+DmModel.belongsTo(UserModel, { foreignKey: "f_seq" });
+// Message
+DmModel.hasMany(MessageModel, { foreignKey: "d_seq", onDelete: "CASCADE" });
+MessageModel.belongsTo(DmModel, { foreignKey: "d_seq", onDelete: "CASCADE" });
+UserModel.hasMany(MessageModel, { foreignKey: "u_seq", onDelete: "CASCADE" }); // 여기서 수정
+MessageModel.belongsTo(UserModel, { foreignKey: "u_seq", onDelete: "CASCADE" }); // 여기서 수정
+// Alarm
+DmModel.hasMany(AlarmModel, { foreignKey: "d_seq", onDelete: "CASCADE" });
+AlarmModel.belongsTo(DmModel, { foreignKey: "d_seq", onDelete: "CASCADE" });
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
 db.User = UserModel;
 db.Game = GameModel;
+db.DM = DmModel;
+db.Message = MessageModel;
+db.Alarm = AlarmModel;
 
 module.exports = db;

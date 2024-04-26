@@ -68,6 +68,29 @@ exports.postSignin = (req, res, next) => {
     })(req, res, next); // authenticate()는 미들웨어 함수를 반환함
 };
 
+// 유저 접속 업데이트
+exports.patchUserState = async (req, res) => {
+    const nowUser = req.session.passport; // 현재 유저 확인
+    const newState = !req.user.dataValues.connect;
+    if (nowUser.user === req.user.dataValues.id) {
+        try {
+            await User.update(
+                {
+                    connect: newState,
+                },
+                {
+                    where: { u_seq: req.user.dataValues.u_seq },
+                }
+            );
+            res.send(true);
+        } catch {
+            res.status(500).send("server error");
+        }
+    } else {
+        res.send("로그인이 필요합니다.");
+    }
+};
+
 // 로그아웃
 exports.getLogout = (req, res) => {
     console.log("로그아웃하는 유저 세션 정보", req.session.passport);
@@ -173,3 +196,32 @@ exports.uploadProfile = (req, res) => {
 //             res.status(500).send("회원 탈퇴 실패");
 //         });
 // };
+
+// 유저 랭킹 목록(임시로 상위 50명-)
+exports.getLank = async (req, res) => {
+    try {
+        const userList = await User.findAll({
+            limit: 50,
+            order: [["score", "DESC"]],
+        });
+        res.send(userList);
+    } catch {
+        res.status(500).send("server error");
+    }
+};
+
+// 유저 스코어 업데이트(임시로 한 판 승리할 때마다 2점씩 증가-)
+exports.patchScore = async (req, res) => {
+    const { u_seq } = req.body;
+
+    try {
+        const userInfo = await User.findOne({
+            where: { u_seq: u_seq },
+            attributes: ["score"],
+        });
+        await User.update({ score: userInfo.dataValues.score + 2 }, { where: { u_seq } });
+        res.send(true);
+    } catch {
+        res.status(500).send("server error");
+    }
+};

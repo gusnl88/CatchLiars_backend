@@ -52,28 +52,28 @@ exports.postSignup = async (req, res) => {
 // 로그인
 exports.postSignin = (req, res, next) => {
     passport.authenticate("local", (authErr, userInfo, authFail) => {
+        console.log("로그인된 유저정보", userInfo);
         // 로그인 에러, 로그인 유저정보, 로그인 실패
         if (authErr) next(authErr);
         if (!userInfo) {
-            return res.send({
-                loginSuccess: false,
-                message: authFail,
-            });
+            // 로그인 실패
+            return res.send(false);
         }
         req.logIn(userInfo, (loginErr) => {
             if (loginErr) {
                 next(loginErr);
             }
-            res.send({ loginSuccess: true });
+            res.status(200).json(true);
         });
     })(req, res, next); // authenticate()는 미들웨어 함수를 반환함
 };
 
 // 로그아웃
-exports.getLogout = (req, res, next) => {
+exports.getLogout = (req, res) => {
+    console.log("로그아웃하는 유저 세션 정보", req.session.passport);
     req.logout((err) => {
         if (err) {
-            return next(err);
+            return res.redirect("/");
         }
         // 로그아웃 성공(현재의 세션상태를 session에 저장한 후 리다이렉트)
         req.session.save((err) => {

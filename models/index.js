@@ -27,13 +27,41 @@ MessageModel.belongsTo(UserModel, { foreignKey: "u_seq", onDelete: "CASCADE" });
 DmModel.hasMany(AlarmModel, { foreignKey: "d_seq", onDelete: "CASCADE" });
 AlarmModel.belongsTo(DmModel, { foreignKey: "d_seq", onDelete: "CASCADE" });
 
+const FriendModel = require("./Friend")(sequelize, Sequelize);
+const InvitationModel = require("./Invitation")(sequelize, Sequelize);
+
+UserModel.hasMany(FriendModel, {
+    sourceKey: "u_seq",
+    foreignKey: "u_seq",
+});
+
+FriendModel.belongsTo(UserModel, {
+    sourceKey: "u_seq",
+    foreignKey: "u_seq",
+});
+
+UserModel.hasMany(InvitationModel, {
+    sourceKey: "u_seq",
+    foreignKey: "u_seq",
+});
+
+InvitationModel.belongsTo(UserModel, {
+    sourceKey: "u_seq",
+    foreignKey: "u_seq",
+});
+
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
 db.User = UserModel;
 db.Game = GameModel;
+
 db.DM = DmModel;
 db.Message = MessageModel;
 db.Alarm = AlarmModel;
+
+db.Friend = FriendModel;
+db.Invitation = InvitationModel;
+
 
 module.exports = db;

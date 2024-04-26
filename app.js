@@ -10,17 +10,27 @@ const userRouter = require("./routes/user");
 const gameRouter = require("./routes/game");
 const dmRouter = require("./routes/dm");
 // const AlarmRouter = require("./router/alarm");
+const friendRouter = require("./routes/friend");
+const invitationRouter = require("./routes/invitation");
 const serverPrefix = "/";
 const session = require("express-session");
+const cookieParser = require("cookie-parser");
 const passport = require("passport");
 const { User, Game, DM, Message, Alarm } = require("./models");
+const bcrypt = require("bcrypt");
 const LocalStrategy = require("passport-local").Strategy; // 로그인 진행 방식
 const socketHandler = require("./sockets");
 
 // body-parser 설정
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(cors());
+app.use(cookieParser());
+app.use(
+    cors({
+        origin: "http://localhost:3000", // 클라이언트의 주소
+        credentials: true, // 쿠키 허용
+    })
+);
 
 app.use("/uploads", express.static(__dirname + "/uploads"));
 
@@ -32,6 +42,7 @@ app.use(
         saveUninitialized: false,
         cookie: {
             maxAge: 1000 * 60 * 60,
+            httpOnly: true,
         },
     })
 );
@@ -71,19 +82,21 @@ passport.use(
 );
 
 // 로그인 성공시, 유저 정보를 session에 저장
-passport.serializeUser((userInfo, cb) => {
-    cb(null, userInfo.id);
+// 초기 로그인 시에 실행
+passport.serializeUser((user, cb) => {
+    cb(null, user.id); // 로그인 성공시 deserializeUser에 user.id 전송
 });
 
 // session에 저장된 사용자 정보 검증
+// 매 요청시에 실행
 passport.deserializeUser(async (inputId, cb) => {
     try {
-        const userInfo = await User.findOne({
+        const user = await User.findOne({
             where: {
                 id: inputId,
             },
         });
-        if (userInfo) cb(null, userInfo);
+        if (user) cb(null, user); // db에서 해당 유저를 찾아서 리턴
     } catch (err) {
         console.log(err);
     }
@@ -93,6 +106,8 @@ passport.deserializeUser(async (inputId, cb) => {
 app.use(serverPrefix, indexRouter); // index.js
 app.use(serverPrefix + "users", userRouter);
 app.use(serverPrefix + "games", gameRouter);
+app.use(serverPrefix + "friends", friendRouter);
+app.use(serverPrefix + "invites", invitationRouter);
 
 // sequelize를 통해 데이터베이스 연결
 sequelize

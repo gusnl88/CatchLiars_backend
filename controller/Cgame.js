@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const { Game } = require("../models");
 
 // 게임방 생성
@@ -35,6 +36,26 @@ exports.getGame = async (req, res) => {
             order: [["g_seq", "DESC"]],
         });
         res.send(gameList);
+    } catch {
+        res.status(500).send("server error");
+    }
+};
+
+// 게임방 검색
+// get /games/search/:type?keyword=~
+exports.getSearch = async (req, res) => {
+    try {
+        const { keyword } = req.query;
+        const { type } = req.params; // 0: 캐치라이어, 1: 마피아
+
+        const searchList = await Game.findAll({
+            where: {
+                g_type: type,
+                g_title: { [Op.like]: `%${keyword}%` },
+            },
+            order: [["g_seq", "DESC"]],
+        });
+        res.send(searchList);
     } catch {
         res.status(500).send("server error");
     }

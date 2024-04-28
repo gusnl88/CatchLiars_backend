@@ -1,6 +1,7 @@
 const { User } = require("../models");
 const { validationResult } = require("express-validator"); // 유효성 검증
 const passport = require("passport");
+const bcrypt = require("bcrypt");
 
 // 중복검사
 exports.checkDuplicate = async (req, res) => {
@@ -29,22 +30,25 @@ exports.postSignup = async (req, res) => {
         // 유효성 검증 통과X
         return res.send({ errors: errors.array() });
     }
-
     const { id, pw, nickname, email } = req.body;
-
     try {
+        // 비밀번호 암호화
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(pw, salt);
+
         await User.create({
             u_seq: null,
-            id,
-            pw,
-            email,
-            nickname,
+            id: id,
+            pw: hash,
+            email: email,
+            nickname: nickname,
             score: 0,
             connect: 0,
             image: null,
         });
         res.send(true);
-    } catch {
+    } catch (error) {
+        console.log("error", error);
         res.status(500).send("server error");
     }
 };

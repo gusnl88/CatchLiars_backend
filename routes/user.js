@@ -53,8 +53,11 @@ router.post("/signin", controller.postSignin);
 // 로그아웃
 router.get("/logout", controller.getLogout);
 
-// 유저 접속 업데이트
-router.patch("/state", controller.patchUserState);
+// 유저 로그인 접속 업데이트
+router.patch("/stateTrue", controller.patchStateTrue);
+
+// 유저 로그아웃 접속 업데이트
+router.patch("/stateFalse", controller.patchStateFalse);
 
 // 프로필 목록
 router.get("/myPage", controller.getProfile);

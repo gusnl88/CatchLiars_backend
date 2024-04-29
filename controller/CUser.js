@@ -2,6 +2,7 @@ const { User } = require("../models");
 const { validationResult } = require("express-validator"); // 유효성 검증
 const passport = require("passport");
 const bcrypt = require("bcrypt");
+const { Op } = require("sequelize");
 
 // 중복검사
 exports.checkDuplicate = async (req, res) => {
@@ -225,6 +226,23 @@ exports.patchScore = async (req, res) => {
         });
         await User.update({ score: userInfo.dataValues.score + 2 }, { where: { u_seq } });
         res.send(true);
+    } catch {
+        res.status(500).send("server error");
+    }
+};
+
+// 유저 검색 (아이디)
+// get /games/search?keyword=~
+exports.getUser = async (req, res) => {
+    try {
+        const { keyword } = req.query;
+
+        const userList = await User.findAll({
+            where: {
+                id: { [Op.like]: `%${keyword}%` },
+            },
+        });
+        res.send(userList);
     } catch {
         res.status(500).send("server error");
     }

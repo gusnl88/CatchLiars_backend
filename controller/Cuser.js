@@ -4,7 +4,6 @@ const passport = require("passport");
 const bcrypt = require("bcrypt");
 const { Op } = require("sequelize");
 
-
 // 중복검사
 exports.checkDuplicate = async (req, res) => {
     try {
@@ -74,15 +73,36 @@ exports.postSignin = (req, res, next) => {
     })(req, res, next); // authenticate()는 미들웨어 함수를 반환함
 };
 
-// 유저 접속 업데이트
-exports.patchUserState = async (req, res) => {
+// 로그인시 접속 상태 변경
+exports.patchStateTrue = async (req, res) => {
     const nowUser = req.session.passport; // 현재 유저 확인
-    const newState = !req.user.dataValues.connect;
     if (nowUser.user === req.user.dataValues.id) {
         try {
             await User.update(
                 {
-                    connect: newState,
+                    connect: 1,
+                },
+                {
+                    where: { u_seq: req.user.dataValues.u_seq },
+                }
+            );
+            res.send(true);
+        } catch {
+            res.status(500).send("server error");
+        }
+    } else {
+        res.send("로그인이 필요합니다.");
+    }
+};
+
+// 로그아웃시 접속 상태 변경
+exports.patchStateFalse = async (req, res) => {
+    const nowUser = req.session.passport; // 현재 유저 확인
+    if (nowUser.user === req.user.dataValues.id) {
+        try {
+            await User.update(
+                {
+                    connect: 0,
                 },
                 {
                     where: { u_seq: req.user.dataValues.u_seq },
@@ -102,11 +122,11 @@ exports.getLogout = (req, res) => {
     console.log("로그아웃하는 유저 세션 정보", req.session.passport);
     req.logout((err) => {
         if (err) {
-            return res.redirect("/");
+            return res.send(false);
         }
         // 로그아웃 성공(현재의 세션상태를 session에 저장한 후 리다이렉트)
         req.session.save((err) => {
-            return res.redirect("/");
+            return res.send(true);
         });
     });
 };
@@ -232,7 +252,6 @@ exports.patchScore = async (req, res) => {
     }
 };
 
-
 // 유저 검색 (아이디)
 // get /games/search?keyword=~
 exports.getUser = async (req, res) => {
@@ -249,4 +268,3 @@ exports.getUser = async (req, res) => {
         res.status(500).send("server error");
     }
 };
-

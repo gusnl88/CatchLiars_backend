@@ -4,6 +4,7 @@ const passport = require("passport");
 const bcrypt = require("bcrypt");
 const { Op } = require("sequelize");
 
+
 // 중복검사
 exports.checkDuplicate = async (req, res) => {
     try {
@@ -231,6 +232,7 @@ exports.patchScore = async (req, res) => {
     }
 };
 
+
 // 유저 검색 (아이디)
 // get /games/search?keyword=~
 exports.getUser = async (req, res) => {
@@ -247,3 +249,4 @@ exports.getUser = async (req, res) => {
         res.status(500).send("server error");
     }
 };
+

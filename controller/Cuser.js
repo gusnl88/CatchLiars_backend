@@ -134,42 +134,22 @@ exports.getLogout = (req, res) => {
 // mypage관련
 exports.getProfile = async (req, res) => {
     try {
-        if (!req.session.id) {
-            return res.status(401).json({ message: "로그인이 필요합니다." });
-        }
-
-        const userData = await model.User.findOne({
-            where: {
-                id: req.session.id,
-            },
-        });
-
-        if (!userData) {
-            return res.status(404).json({ message: "사용자 정보를 찾을 수 없습니다." });
-        }
-
-        res.render("profileEdit", { data: userData });
-    } catch (error) {
-        console.error("프로필 조회 실패", error);
-        res.status(500).json({ message: "프로필 조회 실패" });
-    }
-};
-
-exports.getProfile = async (req, res) => {
-    try {
-        if (req.session.id) {
-            const userData = await model.User.findOne({
-                where: { u_seq: req.session.data.u_seq },
+        if (req.user.dataValues.id) {
+            const userInfo = await User.findOne({
+                where: {
+                    u_seq: req.user.dataValues.u_seq,
+                },
             });
-            return res.status(200).json(userData);
+            if (userInfo) return res.send(userInfo);
+            else return res.status(404).json({ message: "사용자 정보를 찾을 수 없습니다." });
         } else {
             return res.status(401).json({ message: "로그인이 필요합니다." });
         }
     } catch (error) {
-        console.error("프로필 조회 실패", error);
-        return res.status(500).json({ message: "프로필 조회 실패" });
+        res.status(500).json({ message: "프로필 조회 실패" });
     }
 };
+
 exports.postProfile = (req, res) => {
     model.User.findOne({
         where: {
@@ -184,7 +164,6 @@ exports.postProfile = (req, res) => {
             return res.render("profileEdit", { data: result });
         })
         .catch(() => {
-            //console.log("프로필 조회 실패");
             return res.send(500).send("프로필 조회 실패");
         });
 };

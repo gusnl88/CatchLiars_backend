@@ -291,11 +291,13 @@ function socketHandler(server) {
                 socketId: socket.id,
             };
 
-            // 이미 같은 소켓 ID를 가진 플레이어가 있는지 확인
-            const isPlayerExist = players.some((player) => player.socketId === socket.id);
+            // 중복 유저 확인
+            const isPlayerExist = players.find(
+                (player) => player.socketId === socket.id || player.id === loginUser.id
+            );
             if (isPlayerExist) {
                 // 이미 존재하는 플레이어라면 에러 메시지 전송
-                // socket.emit("errorMsg", "이미 존재하는 유저입니다.");
+                // socket.emit("userError", "잘못된 경로입니다.");
             } else {
                 // 존재하지 않는 경우, 새로운 플레이어를 추가
                 players.push(player);

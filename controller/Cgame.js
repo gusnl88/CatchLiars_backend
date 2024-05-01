@@ -165,18 +165,32 @@ exports.patchMinus = async (req, res) => {
     }
 };
 
-// 게임방 삭제
-// exports.deleteGame = async (req, res) => {
-//     const { g_seq } = req.params;
-//     try {
-//         const game = await Game.destroy({
-//             where: {
-//                 g_seq,
-//             },
-//         });
-//         if (game) return res.send(true);
-//         else return res.send(false);
-//     } catch {
-//         return res.status(500).send("server error");
-//     }
-// };
+// 게임방 상태 변경
+// patch /games/state/:g_seq
+exports.patchGameState = async (req, res) => {
+    const { g_seq } = req.params;
+    const { type } = req.body;
+
+    if (type === "start") {
+        // 게임중
+        await Game.update(
+            {
+                g_state: 0, // 진입불가
+            },
+            {
+                where: { g_seq },
+            }
+        );
+        return res.send(true);
+    } else {
+        await Game.update(
+            {
+                g_state: 1,
+            },
+            {
+                where: { g_seq },
+            }
+        );
+        return res.send(true);
+    }
+};

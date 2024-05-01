@@ -20,7 +20,7 @@ router.patch("/plus/:g_seq", controller.patchPlus);
 // 게임방 인원 감소
 router.patch("/minus/:g_seq", controller.patchMinus);
 
-// 게임방 삭제
-// router.delete("/:g_seq", controller.deleteGame);
+// 게임방 상태 변경
+router.patch("/state/:g_seq", controller.patchGameState);
 
 module.exports = router;

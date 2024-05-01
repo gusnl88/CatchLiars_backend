@@ -25,16 +25,29 @@ exports.postInvitation = async (req, res) => {
 
             if (friend) {
                 // 이미 친구인 경우
-                res.send("이미 존재하는 친구입니다.");
+                return res.send("이미 존재하는 친구입니다.");
             }
         }
-        await Invitation.create({
-            u_seq,
-            f_seq: req.user.dataValues.u_seq,
-            g_seq: last_g_seq,
-            i_type: type,
+        // 이미 초대를 보낸 경우
+        const invitation = await Invitation.findOne({
+            where: {
+                f_seq: req.user.dataValues.u_seq,
+                u_seq: u_seq,
+            },
         });
-        res.send(true);
+        if (invitation) {
+            if (!type) {
+                return res.send("이미 친구 신청을 완료하셨습니다.");
+            }
+        } else {
+            await Invitation.create({
+                u_seq,
+                f_seq: req.user.dataValues.u_seq,
+                g_seq: last_g_seq,
+                i_type: type,
+            });
+            return res.send(true);
+        }
     } else {
         return res.send("로그인이 필요합니다.");
     }
@@ -56,7 +69,7 @@ exports.acceptInvitation = async (req, res) => {
                 },
             });
             if (friend) {
-                res.send("이미 존재하는 친구입니다.");
+                return res.send("이미 존재하는 친구입니다.");
             } else {
                 try {
                     await Friend.create({
@@ -69,9 +82,9 @@ exports.acceptInvitation = async (req, res) => {
                         u_seq: f_seq,
                         c_seq: req.user.dataValues.u_seq,
                     });
-                    res.send(true);
+                    return res.send(true);
                 } catch {
-                    res.status(500).send("server error");
+                    return res.status(500).send("server error");
                 }
             }
         }
@@ -94,12 +107,12 @@ exports.deleteInvitation = async (req, res) => {
                 },
             });
             if (invitation) res.send(true);
-            else res.send(false);
+            else return res.send(false);
         } catch {
-            res.status(500).send("server error");
+            return res.status(500).send("server error");
         }
     } else {
-        res.send("로그인이 필요합니다.");
+        return res.send("로그인이 필요합니다.");
     }
 };
 
@@ -117,11 +130,11 @@ exports.getInvitation = async (req, res) => {
                 },
                 order: [["i_seq", "DESC"]],
             });
-            res.send(invitationList);
+            return res.send(invitationList);
         } catch (error) {
-            res.status(500).send("server error");
+            return res.status(500).send("server error");
         }
     } else {
-        res.send("로그인이 필요합니다.");
+        return res.send("로그인이 필요합니다.");
     }
 };

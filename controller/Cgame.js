@@ -14,13 +14,13 @@ exports.postGame = async (req, res) => {
                 g_pw: pw,
                 g_type: type,
             });
-            res.send(gameInfo);
+            return res.send(gameInfo);
         } catch (error) {
             console.log("error", error);
-            res.status(500).send("server error");
+            return res.status(500).send("server error");
         }
     } else {
-        res.send("로그인이 필요합니다.");
+        return res.send("로그인이 필요합니다.");
     }
 };
 
@@ -35,9 +35,9 @@ exports.getGame = async (req, res) => {
             },
             order: [["g_seq", "DESC"]],
         });
-        res.send(gameList);
+        return res.send(gameList);
     } catch {
-        res.status(500).send("server error");
+        return res.status(500).send("server error");
     }
 };
 
@@ -55,9 +55,9 @@ exports.getSearch = async (req, res) => {
             },
             order: [["g_seq", "DESC"]],
         });
-        res.send(searchList);
+        return res.send(searchList);
     } catch {
-        res.status(500).send("server error");
+        return res.status(500).send("server error");
     }
 };
 
@@ -78,12 +78,12 @@ exports.patchGameSetting = async (req, res) => {
                     where: { g_seq },
                 }
             );
-            res.send(true);
+            return res.send(true);
         } catch {
-            res.status(500).send("server error");
+            return res.status(500).send("server error");
         }
     } else {
-        res.send("로그인이 필요합니다.");
+        return res.send("로그인이 필요합니다.");
     }
 };
 
@@ -109,7 +109,7 @@ exports.patchPlus = async (req, res) => {
                         where: { g_seq },
                     }
                 );
-                res.send(true);
+                return res.send(true);
             }
         } else {
             // 캐치 라이어
@@ -123,11 +123,11 @@ exports.patchPlus = async (req, res) => {
                         where: { g_seq },
                     }
                 );
-                res.send(true);
+                return res.send(true);
             }
         }
     } catch {
-        res.status(500).send("server error");
+        return res.status(500).send("server error");
     }
 };
 
@@ -142,7 +142,7 @@ exports.patchMinus = async (req, res) => {
         const new_total = gameInfo.g_total - 1;
 
         if (new_total <= 0) {
-            res.send(false);
+            return res.send(false);
         } else {
             await Game.update(
                 {
@@ -152,10 +152,10 @@ exports.patchMinus = async (req, res) => {
                     where: { g_seq },
                 }
             );
-            res.send(true);
+            return res.send(true);
         }
     } catch {
-        res.status(500).send("server error");
+        return res.status(500).send("server error");
     }
 };
 
@@ -168,9 +168,9 @@ exports.deleteGame = async (req, res) => {
                 g_seq,
             },
         });
-        if (game) res.send(true);
-        else res.send(false);
+        if (game) return res.send(true);
+        else return res.send(false);
     } catch {
-        res.status(500).send("server error");
+        return res.status(500).send("server error");
     }
 };

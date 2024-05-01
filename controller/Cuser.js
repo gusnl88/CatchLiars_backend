@@ -19,7 +19,7 @@ exports.checkDuplicate = async (req, res) => {
             return res.send(true);
         }
     } catch {
-        res.status(500).send("server error");
+        return res.status(500).send("server error");
     }
 };
 
@@ -47,10 +47,10 @@ exports.postSignup = async (req, res) => {
             connect: 0,
             image: null,
         });
-        res.send(true);
+        return res.send(true);
     } catch (error) {
         console.log("error", error);
-        res.status(500).send("server error");
+        return res.status(500).send("server error");
     }
 };
 
@@ -68,15 +68,15 @@ exports.postSignin = (req, res, next) => {
             if (loginErr) {
                 next(loginErr);
             }
-            res.status(200).json(true);
+            return res.status(200).json(true);
         });
     })(req, res, next); // authenticate()는 미들웨어 함수를 반환함
 };
 
 // 로그인시 접속 상태 변경
 exports.patchStateTrue = async (req, res) => {
-    const nowUser = req.session.passport; // 현재 유저 확인
-    if (nowUser.user === req.user.dataValues.id) {
+    // const nowUser = req.session.passport; // 현재 유저 확인
+    if (req.user.dataValues.id) {
         try {
             await User.update(
                 {
@@ -86,19 +86,19 @@ exports.patchStateTrue = async (req, res) => {
                     where: { u_seq: req.user.dataValues.u_seq },
                 }
             );
-            res.send(true);
+            return res.send(true);
         } catch {
-            res.status(500).send("server error");
+            return res.status(500).send("server error");
         }
     } else {
-        res.send("로그인이 필요합니다.");
+        return res.send("로그인이 필요합니다.");
     }
 };
 
 // 로그아웃시 접속 상태 변경
 exports.patchStateFalse = async (req, res) => {
-    const nowUser = req.session.passport; // 현재 유저 확인
-    if (nowUser.user === req.user.dataValues.id) {
+    // const nowUser = req.session.passport; // 현재 유저 확인
+    if (req.user) {
         try {
             await User.update(
                 {
@@ -108,12 +108,12 @@ exports.patchStateFalse = async (req, res) => {
                     where: { u_seq: req.user.dataValues.u_seq },
                 }
             );
-            res.send(true);
+            return res.send(true);
         } catch {
-            res.status(500).send("server error");
+            return res.status(500).send("server error");
         }
     } else {
-        res.send("로그인이 필요합니다.");
+        return res.send("로그인이 필요합니다.");
     }
 };
 
@@ -138,13 +138,13 @@ exports.getProfile = async (req, res) => {
             const userData = await model.User.findOne({
                 where: { u_seq: req.session.data.u_seq },
             });
-            res.status(200).json(userData);
+            return res.status(200).json(userData);
         } else {
-            res.status(401).json({ message: "로그인이 필요합니다." });
+            return res.status(401).json({ message: "로그인이 필요합니다." });
         }
     } catch (error) {
         console.error("프로필 조회 실패", error);
-        res.status(500).json({ message: "프로필 조회 실패" });
+        return res.status(500).json({ message: "프로필 조회 실패" });
     }
 };
 exports.postProfile = (req, res) => {
@@ -158,11 +158,11 @@ exports.postProfile = (req, res) => {
                 return res.status(404).send("사용자 정보를 찾을 수 없습니다.");
             }
             // console.log("프로필페이지", result);
-            res.render("profileEdit", { data: result });
+            return res.render("profileEdit", { data: result });
         })
         .catch(() => {
             //console.log("프로필 조회 실패");
-            res.send(500).send("프로필 조회 실패");
+            return res.send(500).send("프로필 조회 실패");
         });
 };
 exports.editUser = async (req, res) => {
@@ -230,9 +230,9 @@ exports.getLank = async (req, res) => {
             limit: 50,
             order: [["score", "DESC"]],
         });
-        res.send(userList);
+        return res.send(userList);
     } catch {
-        res.status(500).send("server error");
+        return res.status(500).send("server error");
     }
 };
 
@@ -246,9 +246,9 @@ exports.patchScore = async (req, res) => {
             attributes: ["score"],
         });
         await User.update({ score: userInfo.dataValues.score + 2 }, { where: { u_seq } });
-        res.send(true);
+        return res.send(true);
     } catch {
-        res.status(500).send("server error");
+        return res.status(500).send("server error");
     }
 };
 
@@ -263,8 +263,8 @@ exports.getUser = async (req, res) => {
                 id: { [Op.like]: `%${keyword}%` },
             },
         });
-        res.send(userList);
+        return res.send(userList);
     } catch {
-        res.status(500).send("server error");
+        return res.status(500).send("server error");
     }
 };

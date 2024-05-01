@@ -8,10 +8,14 @@ const DM = (Sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
-            // last_id: {
-            //     type: DataTypes.INTEGER,
-            //     allowNull: false,
-            // },
+            f_seq: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
+            },
+            last_id: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
+            },
             unreadcnt: {
                 type: DataTypes.INTEGER,
                 allowNull: false,
@@ -21,7 +25,7 @@ const DM = (Sequelize, DataTypes) => {
         {
             tableName: "DM",
             freezeTableName: true,
-            timestamps: false,
+            timestamps: true,
         }
     );
 };

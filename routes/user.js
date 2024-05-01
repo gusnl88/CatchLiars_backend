@@ -63,7 +63,7 @@ router.patch("/stateFalse", controller.patchStateFalse);
 router.get("/myPage", controller.getProfile);
 
 // 프로필 수정
-router.post("/myPage", controller.postProfile);
+router.post("/myPage", controller.editUser);
 
 // 이미지 수정deleteUser
 router.post("/editUser", multer.uploadProfile.single("fileInput"), controller.editUser);

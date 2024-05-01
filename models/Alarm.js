@@ -12,6 +12,10 @@ const Alarm = (Sequelize, DataTypes) => {
                 type: DataTypes.INTEGER,
                 allowNull: false,
             },
+            coment: {
+                type: DataTypes.CHAR(50),
+                allowNull: false,
+            },
         },
         {
             tableName: "Alarm",

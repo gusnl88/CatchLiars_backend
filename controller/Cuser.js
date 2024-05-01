@@ -32,6 +32,16 @@ exports.postSignup = async (req, res) => {
         return res.send({ errors: errors.array() });
     }
     const { id, pw, nickname, email } = req.body;
+
+    try {
+        await User.create({
+            u_seq: null,
+            id,
+            pw,
+            email,
+            nickname,
+
+    const { id, pw, nickname, email } = req.body;
     try {
         // 비밀번호 암호화
         const salt = await bcrypt.genSalt(10);
@@ -68,7 +78,7 @@ exports.postSignin = (req, res, next) => {
             if (loginErr) {
                 next(loginErr);
             }
-            return res.status(200).json(true);
+            return res.status(200).json(userInfo);
         });
     })(req, res, next); // authenticate()는 미들웨어 함수를 반환함
 };
@@ -117,6 +127,7 @@ exports.patchStateFalse = async (req, res) => {
     }
 };
 
+
 // 로그아웃
 exports.getLogout = (req, res) => {
     console.log("로그아웃하는 유저 세션 정보", req.session.passport);
@@ -132,6 +143,29 @@ exports.getLogout = (req, res) => {
 };
 
 // mypage관련
+exports.getProfile = async (req, res) => {
+    try {
+        if (!req.session.id) {
+            return res.status(401).json({ message: "로그인이 필요합니다." });
+        }
+
+        const userData = await model.User.findOne({
+            where: {
+                id: req.session.id,
+            },
+        });
+
+        if (!userData) {
+            return res.status(404).json({ message: "사용자 정보를 찾을 수 없습니다." });
+        }
+
+        res.render("profileEdit", { data: userData });
+    } catch (error) {
+        console.error("프로필 조회 실패", error);
+        res.status(500).json({ message: "프로필 조회 실패" });
+    }
+};
+
 exports.getProfile = async (req, res) => {
     try {
         if (req.session.id) {
@@ -165,6 +199,7 @@ exports.postProfile = (req, res) => {
             return res.send(500).send("프로필 조회 실패");
         });
 };
+
 exports.editUser = async (req, res) => {
     try {
         const loggedInUserID = req.session.id;

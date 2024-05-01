@@ -21,6 +21,6 @@ router.patch("/plus/:g_seq", controller.patchPlus);
 router.patch("/minus/:g_seq", controller.patchMinus);
 
 // 게임방 삭제
-router.delete("/:g_seq", controller.deleteGame);
+// router.delete("/:g_seq", controller.deleteGame);
 
 module.exports = router;

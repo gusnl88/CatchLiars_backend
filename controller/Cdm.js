@@ -1,29 +1,29 @@
+const { Op } = require("sequelize");
 const { DM, Message } = require("../models");
 const passport = require("passport");
 
 // dm방 전체목록 조회
 exports.getDM = async (req, res) => {
     try {
-        if (req.session.u_seq) {
-            const u_seq = req.session.u_seq;
-
+        const user = req.user.dataValues;
+        if (user) {
             // 사용자의 u_seq와 f_seq가 모두 해당하는 DM을 찾음
             const userDM = await DM.findAll({
                 where: {
                     [Op.or]: [
-                        { u_seq: u_seq }, // 사용자의 u_seq가 일치하는 경우
-                        { f_seq: u_seq }, // 사용자의 f_seq가 일치하는 경우
+                        { u_seq: user.u_seq }, // 사용자의 u_seq가 일치하는 경우
+                        { f_seq: user.u_seq }, // 사용자의 f_seq가 일치하는 경우
                     ],
                 },
+                order: [["d_seq", "DESC"]],
             });
-
-            res.send(userDM);
+            return res.send(userDM);
         } else {
-            res.status(401).send("Unauthorized");
+            return res.status(401).send("로그인이 필요합니다.");
         }
     } catch (error) {
         console.error(error);
-        res.status(500).send("Internal Server Error");
+        return res.status(500).send("Internal Server Error");
     }
 };
 

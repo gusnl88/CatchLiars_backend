@@ -12,7 +12,7 @@ const DM = (Sequelize, DataTypes) => {
                 type: DataTypes.INTEGER,
                 allowNull: false,
             },
-            last_id: {
+            last_seq: {
                 type: DataTypes.INTEGER,
                 allowNull: false,
             },

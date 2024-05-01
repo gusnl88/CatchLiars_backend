@@ -5,8 +5,8 @@ const { Game } = require("../models");
 // post /games
 exports.postGame = async (req, res) => {
     const { title, pw, type } = req.body;
-    const nowUser = req.session.passport; // 현재 유저 확인
-    if (nowUser.user === req.user.dataValues.id) {
+    // const nowUser = req.session.passport; // 현재 유저 확인
+    if (req.user.dataValues.id) {
         try {
             const gameInfo = await Game.create({
                 g_seq: null,

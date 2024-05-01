@@ -2,7 +2,6 @@ const { Friend, User } = require("../models");
 
 // 친구 목록 조회
 exports.getFriend = async (req, res) => {
-    // const nowUser = req.session.passport; // 현재 유저 확인
     try {
         if (req.user.dataValues.id) {
             const friendList = await Friend.findAll({

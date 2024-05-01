@@ -1,6 +1,7 @@
 const { Message, Alarm } = require("../models");
 
 const socketIO = require("socket.io");
+
 function socketHandler(server) {
     const io = socketIO(server, {
         cors: {
@@ -11,9 +12,180 @@ function socketHandler(server) {
     const nickInfo = {};
     const lastId = {}; // 퇴장한 사용자의 정보 저장
     // {socket.id:닉네임1, socket.id: 닉네임2}
+    const userList = {};
+    const vote = {};
+    const mafiaList = {};
+    const citizen = {};
     io.on("connection", (socket) => {
         // io.emit("notice", `${socket.id}님이 입장하셨습니다.`);
 
+        console.log("Client connected");
+
+        socket.on("joinRoom", ({ roomId, userId }) => {
+            socket.join(`room_${roomId}`);
+            if (!userList[roomId]) {
+                userList[roomId] = {}; // roomId를 키로 가지는 객체 생성
+            }
+            userList[roomId][socket.id] = { userId, roomId }; // roomId 안에 socket.id를 키로 가지는 객체 생성
+            console.log("유저리스트", userList);
+            console.log(`환영합니다 ${userId} room_${roomId}`);
+            const message = `${userId}님이 room_${roomId}방에 입장하셨습니다.`;
+
+            io.to(`room_${roomId}`).emit("userList", getUserList(roomId));
+
+            socket.broadcast.to(`room_${roomId}`).emit("message", message);
+        });
+
+        socket.on("message", async ({ roomId, message }) => {
+            console.log(`Message in room_${roomId}:`, message);
+            io.to(`room_${roomId}`).emit(
+                "message",
+                `${userList[roomId][socket.id].userId} : ${message}`
+            );
+        });
+        socket.on("vote", ({ userId, roomId }) => {
+            console.log(userId, roomId);
+            if (!vote[roomId]) {
+                vote[roomId] = []; // roomId를 키로 가지는 배열 생성
+            }
+            vote[roomId].push(userId);
+            console.log("vote", vote);
+            console.log("유저리스트", userList);
+            const sum = userList[roomId] ? Object.keys(userList[roomId]).length : 0;
+            console.log(sum, "썸썸");
+
+            if (vote[roomId].length === sum) {
+                let maxVote = "";
+                let maxCount = 0;
+                const voteCount = {};
+                vote[roomId].forEach((item) => {
+                    if (!voteCount[item]) {
+                        voteCount[item] = 1;
+                    } else {
+                        voteCount[item]++;
+                    }
+                    if (voteCount[item] > maxCount) {
+                        maxVote = item;
+                        maxCount = voteCount[item];
+                    }
+                });
+
+                console.log("가장 많이 투표받은 아이디:", maxVote);
+                console.log(mafiaList[roomId]);
+                console.log("마피아리스트랑비교할 유저리스트", userList[roomId]);
+                let message;
+                if (mafiaList[roomId].length > 0 && mafiaList[roomId].includes(maxVote)) {
+                    message = `${maxVote}님의 직업은 마피아입니다. 사망 하셨습니다.3초후 퇴장처리 됩니다`;
+                    const index = mafiaList[roomId].indexOf(maxVote);
+                    if (index !== -1) {
+                        mafiaList[roomId].splice(index, 1);
+                    }
+                } else {
+                    message = `선량한 시민 ${maxVote}님은 마피아에 의해 사망하셨습니다.3초후 퇴장처리 됩니다`;
+                    const index = citizen[roomId].indexOf(maxVote);
+                    if (index !== -1) {
+                        citizen[roomId].splice(index, 1);
+                    }
+                }
+                io.to(`room_${roomId}`).emit("message", message);
+                // 위에서 message 변수를 선언해주어야 함
+                message = `${maxVote}님이 탈락하셨습니다.`;
+                socket.broadcast.to(`room_${roomId}`).emit("message", message);
+                console.log("투표완료");
+                resetVote(roomId); // 투표완료후 리스트 삭제.
+                console.log("마피아갯수", Object.keys(mafiaList[roomId]).length);
+                console.log("시민아갯수", Object.keys(citizen[roomId]).length);
+
+                if (Object.keys(mafiaList[roomId]).length >= Object.keys(citizen[roomId]).length) {
+                    message = "마피아가 승리했습니다.10초후 방은 폭파됩니다.수고하셧습니다"; //마피아가 승리했을경우 로직
+                    io.to(`room_${roomId}`).emit("message", message);
+                    io.to(`room_${roomId}`).emit("victory", "마피아승리");
+                    resetMafiaCitizen(roomId);
+                } else if (mafiaList[roomId].length === 0) {
+                    message = "시민이 승리했습니다.10초후 방은 폭파됩니다.수고하셧습니다"; // 시민이 승리했을 경우 로직
+                    io.to(`room_${roomId}`).emit("message", message);
+                    io.to(`room_${roomId}`).emit("victory", "마피아승리");
+                    resetMafiaCitizen(roomId);
+                } else {
+                    // 게임을 계속 진행합니다.
+                    io.to(`room_${roomId}`).emit("restart", {
+                        maxVote: maxVote,
+                        mafiaList: mafiaList[roomId],
+                    });
+                }
+
+                // 게임 종료 후 마피아 리스트 초기화하지 않도록 수정
+                // setMafia(roomId); // 마피아 리스트 초기화
+                console.log(Object.keys(userList[roomId]).length);
+            }
+        });
+
+        function resetVote(roomId) {
+            delete vote[roomId];
+        }
+        function resetMafiaCitizen(roomId) {
+            delete mafiaList[roomId];
+            delete citizen[roomId];
+        }
+        // 랜덤 마피아 2명 설정
+        function setMafia(roomId) {
+            console.log(roomId);
+            if (!mafiaList[roomId]) {
+                mafiaList[roomId] = [];
+            }
+            if (!citizen[roomId]) {
+                citizen[roomId] = [];
+            }
+            const users = Object.keys(userList[roomId]);
+            const mafiaIndex = getRandomInt(0, users.length - 1);
+            const mafiaIndex2 = getRandomInt(0, users.length - 1);
+
+            for (let i = 0; i < users.length; i++) {
+                if (i === mafiaIndex || i === mafiaIndex2) {
+                    mafiaList[roomId].push(userList[roomId][users[i]].userId);
+                    io.to(users[i]).emit("job", "마피아");
+                } else {
+                    citizen[roomId].push(userList[roomId][users[i]].userId);
+                    io.to(users[i]).emit("job", "시민");
+                }
+            }
+            console.log(mafiaList[roomId], "마피아갯수");
+            console.log(citizen[roomId], "시민갯수");
+            console.log(citizen);
+            console.log(mafiaList);
+        }
+
+        // 랜덤 정수 생성 함수
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // 게임 시작 이벤트
+        socket.on("startGame", ({ roomId }) => {
+            console.log(roomId);
+            setMafia(roomId);
+            console.log("마피아리스트", mafiaList);
+        });
+        socket.on("disconnect", () => {
+            for (const roomId in userList) {
+                if (userList[roomId][socket.id]) {
+                    const { userId } = userList[roomId][socket.id];
+                    const message = `${userId}님이 방을 나가셨습니다.`;
+                    console.log(message);
+                    delete userList[roomId][socket.id];
+                    io.to(`room_${roomId}`).emit("userList", getUserList(roomId));
+                    socket.broadcast.to(`room_${roomId}`).emit("message", message);
+                }
+            }
+        });
+
+        function getUserList(roomId) {
+            const userLists = [];
+            for (const socketId in userList[roomId]) {
+                userLists.push(userList[roomId][socketId].userId);
+            }
+            return userLists;
+        }
         socket.on("checkNick", (nickname) => {
             // console.log(nickname);
 

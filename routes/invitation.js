@@ -6,7 +6,7 @@ const controller = require("../controller/Cinvitation");
 router.post("/", controller.postInvitation);
 
 // 초대 목록 조회
-router.get("/list/:type", controller.getInvitation);
+router.get("/list", controller.getInvitation);
 
 // 초대 수락하기
 router.post("/accept", controller.acceptInvitation);

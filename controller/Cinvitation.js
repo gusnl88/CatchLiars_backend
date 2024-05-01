@@ -1,4 +1,4 @@
-const { Invitation, Friend } = require("../models");
+const { Invitation, Friend, User } = require("../models");
 
 // 초대 발송
 exports.postInvitation = async (req, res) => {
@@ -55,7 +55,11 @@ exports.postInvitation = async (req, res) => {
 
 // 초대 수락
 exports.acceptInvitation = async (req, res) => {
-    const { f_seq, type } = req.body; // 송신자, 초대 유형
+    const { f_seq, type } = req.body; // 수신자, 초대 유형
+
+    if (f_seq === req.user.dataValues.id) {
+        return res.send("친구신청은 본인에게 할 수 없습니다.");
+    }
 
     const nowUser = req.session.passport; // 현재 유저 확인
 
@@ -117,20 +121,28 @@ exports.deleteInvitation = async (req, res) => {
 };
 
 // 초대 목록 조회
-// get /invites/list/:type
+// get /invites/list
 exports.getInvitation = async (req, res) => {
-    const { type } = req.params; // 0: 친구초대 1: 게임초대
     const nowUser = req.session.passport; // 현재 유저 확인
+
     if (nowUser.user === req.user.dataValues.id) {
         try {
             const invitationList = await Invitation.findAll({
                 where: {
-                    i_type: type,
                     u_seq: req.user.dataValues.u_seq,
                 },
                 order: [["i_seq", "DESC"]],
             });
-            return res.send(invitationList);
+            const f_seqList = invitationList.map((invitation) => invitation.dataValues.f_seq);
+            let result = [];
+            for (const f_seq of f_seqList) {
+                const info = await User.findOne({
+                    where: { u_seq: f_seq },
+                    attributes: ["nickname"],
+                });
+                result.push(info.dataValues.nickname);
+            }
+            return res.send({ invitationList: invitationList, nickname: result });
         } catch (error) {
             return res.status(500).send("server error");
         }

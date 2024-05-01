@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const controller = require("../controller/Cuser");
 const { body } = require("express-validator"); // 유효성 검증
-const multer = require("../middleware/upload");
+const uploadPhoto = require("../middleware/upload");
 
 // 회원가입
 router.post(
@@ -66,10 +66,10 @@ router.get("/myPage", controller.getProfile);
 router.patch("/myPage", controller.patchUserProfile);
 
 // 프로필 이미지 수정
-router.patch("/myPage/image", multer.uploadProfile.single("fileInput"), controller.patchUserImage);
+router.patch("/myPage/image", uploadPhoto.single("profileImage"), controller.patchUserImage);
 
 // // 탈퇴하기
-// router.post("/deleteUser", controller.deleteUser);
+router.delete("/myPage", controller.deleteUser);
 
 // 유저 랭킹 목록
 router.get("/lank", controller.getLank);

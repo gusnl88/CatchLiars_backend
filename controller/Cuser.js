@@ -205,40 +205,47 @@ exports.patchUserImage = async (req, res) => {
 
         await User.update(updatedUser, { where: { id: loggedInUserID } });
         req.session.data.image = updatedUser.image;
-        return res.redirect("/myPage");
     } catch (error) {
         console.error("프로필 이미지 업데이트 실패", error);
         return res.status(500).send("프로필 이미지 업데이트 실패");
     }
 };
 
-// // 탈퇴하기
-// exports.deleteUser = (req, res) => {
-//     const user = req.user.dataValues.id;
-//     const userIDFromClient = req.body.id;
+// 탈퇴하기
+exports.deleteUser = async (req, res) => {
+    const loggedInUserID = req.user.dataValues.id;
+    const userIDFromClient = req.body.id;
+    const currentPassword = req.body.currentPassword; // 클라이언트에서 현재 비밀번호 받기
 
-//     if (user !== userIDFromClient) {
-//         return res.status(403).send("권한이 없습니다.");
-//     }
+    if (loggedInUserID !== userIDFromClient) {
+        return res.status(403).send("권한이 없습니다.");
+    }
 
-//     User.destroy({
-//         where: { id: u_seq },
-//     })
-//         .then(() => {
-//             req.session.destroy((err) => {
-//                 if (err) {
-//                     console.error("세션 삭제 실패:", err);
-//                     return res.status(500).send("서버에러");
-//                 }
-//                 res.clearCookie("sessionID");
-//                 res.redirect("/");
-//             });
-//         })
-//         .catch((err) => {
-//             console.error("회원 탈퇴 실패:", err);
-//             res.status(500).send("회원 탈퇴 실패");
-//         });
-// };
+    try {
+        // 현재 비밀번호 확인
+        const user = await User.findOne({ where: { id: loggedInUserID } });
+        const isPasswordCorrect = await bcrypt.compare(currentPassword, user.pw);
+        if (!isPasswordCorrect) {
+            return res.status(401).send("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        // 비밀번호가 일치하면 유저 삭제
+        await User.destroy({ where: { id: loggedInUserID } });
+
+        // 세션 및 쿠키 제거
+        req.session.destroy((err) => {
+            if (err) {
+                console.error("세션 삭제 실패:", err);
+                return res.status(500).send("서버에러");
+            }
+            res.clearCookie("sessionID");
+            res.send(true); // 탈퇴 성공
+        });
+    } catch (error) {
+        console.error("회원 탈퇴 실패:", error);
+        res.status(500).send("회원 탈퇴 실패");
+    }
+};
 
 // 유저 랭킹 목록(임시로 상위 50명-)
 exports.getLank = async (req, res) => {

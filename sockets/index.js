@@ -9,6 +9,7 @@ function socketHandler(server) {
         },
     });
 
+    const players = [];
     const nickInfo = {};
     const lastId = {}; // 퇴장한 사용자의 정보 저장
     // {socket.id:닉네임1, socket.id: 닉네임2}
@@ -267,6 +268,59 @@ function socketHandler(server) {
             } catch (error) {
                 console.error("메시지 저장 중 오류 발생:", error);
                 // 발생한 오류를 적절히 처리합니다.
+            }
+        });
+        socket.on("drawing", (data) => {
+            // console.log("Received drawing data:", data);
+            io.emit("drawing", data);
+        });
+
+        ///////////////////////////////////////////
+        const MAX_PLAYERS = 6; // 최대 플레이어 수
+
+        socket.emit("gameId", socket.id);
+        socket.on("loginUser", (loginUser) => {
+            const player = {
+                id: loginUser.id,
+                nickName: loginUser.nickName,
+                score: 100,
+                socketId: socket.id,
+            };
+
+            // 이미 같은 소켓 ID를 가진 플레이어가 있는지 확인
+            const isPlayerExist = players.some((player) => player.socketId === socket.id);
+            if (isPlayerExist) {
+                // 이미 존재하는 플레이어라면 에러 메시지 전송
+                // socket.emit("errorMsg", "이미 존재하는 유저입니다.");
+            } else {
+                // 존재하지 않는 경우, 새로운 플레이어를 추가
+                players.push(player);
+                console.log(">>", players);
+                const currentPlayers = players.length;
+                if (currentPlayers > MAX_PLAYERS) {
+                    // 만약 최대 플레이어 수를 초과하면 에러 메시지를 전송합니다.
+                    socket.emit("errorMsg", "최대 플레이어 수를 초과하여 입장할 수 없습니다.");
+                    return; // 함수 실행 종료
+                }
+                io.emit("updateUserId", players);
+            }
+
+            // Object.values(nickInfo)= ['닉네임1','닉네임2']
+            // if (Object.values(player).includes(socket.id)) {
+        });
+
+        //퇴장
+        socket.on("disconnect", () => {
+            // 퇴장한 플레이어의 소켓 ID를 가져옵니다.
+            const disconnectedPlayerIndex = players.findIndex(
+                (player) => player.socketId === socket.id
+            );
+
+            if (disconnectedPlayerIndex !== -1) {
+                // 해당 플레이어가 배열에 존재하는 경우에만 삭제합니다.
+
+                players.splice(disconnectedPlayerIndex, 1); // 배열에서 해당 플레이어 삭제  (해당 인덱스에서 하나만 삭제)
+                io.emit("updateUserId", players); // 변경된 플레이어 목록을 클라이언트에게 전달
             }
         });
     });

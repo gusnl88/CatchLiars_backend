@@ -142,7 +142,13 @@ exports.patchMinus = async (req, res) => {
         const new_total = gameInfo.g_total - 1;
 
         if (new_total <= 0) {
-            return res.send(false);
+            const game = await Game.destroy({
+                where: {
+                    g_seq,
+                },
+            });
+            if (game) return res.send(true);
+            else return res.send(false);
         } else {
             await Game.update(
                 {
@@ -160,17 +166,17 @@ exports.patchMinus = async (req, res) => {
 };
 
 // 게임방 삭제
-exports.deleteGame = async (req, res) => {
-    const { g_seq } = req.params;
-    try {
-        const game = await Game.destroy({
-            where: {
-                g_seq,
-            },
-        });
-        if (game) return res.send(true);
-        else return res.send(false);
-    } catch {
-        return res.status(500).send("server error");
-    }
-};
+// exports.deleteGame = async (req, res) => {
+//     const { g_seq } = req.params;
+//     try {
+//         const game = await Game.destroy({
+//             where: {
+//                 g_seq,
+//             },
+//         });
+//         if (game) return res.send(true);
+//         else return res.send(false);
+//     } catch {
+//         return res.status(500).send("server error");
+//     }
+// };

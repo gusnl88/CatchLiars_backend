@@ -32,16 +32,6 @@ exports.postSignup = async (req, res) => {
         return res.send({ errors: errors.array() });
     }
     const { id, pw, nickname, email } = req.body;
-
-    try {
-        await User.create({
-            u_seq: null,
-            id,
-            pw,
-            email,
-            nickname,
-
-    const { id, pw, nickname, email } = req.body;
     try {
         // 비밀번호 암호화
         const salt = await bcrypt.genSalt(10);
@@ -126,7 +116,6 @@ exports.patchStateFalse = async (req, res) => {
         return res.send("로그인이 필요합니다.");
     }
 };
-
 
 // 로그아웃
 exports.getLogout = (req, res) => {

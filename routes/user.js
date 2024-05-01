@@ -63,10 +63,10 @@ router.patch("/stateFalse", controller.patchStateFalse);
 router.get("/myPage", controller.getProfile);
 
 // 프로필 수정
-router.post("/myPage", controller.editUser);
+router.patch("/myPage", controller.patchUserProfile);
 
-// 이미지 수정deleteUser
-router.post("/editUser", multer.uploadProfile.single("fileInput"), controller.editUser);
+// 프로필 이미지 수정
+router.patch("/myPage/image", multer.uploadProfile.single("fileInput"), controller.patchUserImage);
 
 // // 탈퇴하기
 // router.post("/deleteUser", controller.deleteUser);

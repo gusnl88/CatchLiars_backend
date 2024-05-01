@@ -150,64 +150,78 @@ exports.getProfile = async (req, res) => {
     }
 };
 
-exports.postProfile = (req, res) => {
-    model.User.findOne({
-        where: {
-            id: req.session.id,
-        },
-    })
-        .then((result) => {
-            if (!result) {
-                return res.status(404).send("사용자 정보를 찾을 수 없습니다.");
-            }
-            // console.log("프로필페이지", result);
-            return res.render("profileEdit", { data: result });
-        })
-        .catch(() => {
-            return res.send(500).send("프로필 조회 실패");
-        });
-};
-
-exports.editUser = async (req, res) => {
+exports.patchUserProfile = async (req, res) => {
     try {
-        const loggedInUserID = req.session.id;
+        const loggedInUserID = req.user.dataValues.id;
         const userIDFromClient = req.body.id;
+
         if (loggedInUserID !== userIDFromClient) {
             return res.status(403).send("권한이 없습니다.");
         }
 
-        const updatedUser = {
-            pw: hashPW(req.body.pw),
-            nickname: req.body.nickname,
-            email: req.body.email,
-            image: req.file ? req.file.path : null, // 파일이 있으면 경로 저장, 없으면 null
-        };
+        const { currentPassword, newPassword, nickname, email } = req.body;
 
-        await model.User.update(updatedUser, { where: { id: loggedInUserID } });
-        req.session.data.image = updatedUser.image;
-        return res.redirect("/myPage");
+        // 비밀번호 확인을 위해 클라이언트에서 현재 비밀번호도 전송되었는지 확인
+        if (!currentPassword) {
+            return res.status(400).send("현재 비밀번호를 입력해주세요.");
+        }
+
+        // 현재 비밀번호가 맞는지 확인
+        const user = await User.findOne({ where: { id: loggedInUserID } });
+        const isPasswordCorrect = await bcrypt.compare(currentPassword, user.pw);
+        if (!isPasswordCorrect) {
+            return res.status(401).send("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        // 새 비밀번호를 암호화하여 업데이트
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(newPassword, salt);
+
+        // 업데이트할 유저 정보 설정
+        const updatedUser = { nickname, email, pw: hash };
+
+        // 유저 정보 업데이트
+        await User.update(updatedUser, { where: { id: loggedInUserID } });
+
+        return res.send(true);
     } catch (error) {
         console.error("프로필 정보 업데이트 실패", error);
         return res.status(500).send("프로필 정보 업데이트 실패");
     }
 };
 
-exports.uploadProfile = (req, res) => {
-    console.log(req.file); // 파일 정보
-    console.log(req.body); // 텍스트 정보
-    res.send("파일 업로드 완료");
+exports.patchUserImage = async (req, res) => {
+    try {
+        const loggedInUserID = req.user.dataValues.id;
+        const userIDFromClient = req.body.id;
+
+        if (loggedInUserID !== userIDFromClient) {
+            return res.status(403).send("권한이 없습니다.");
+        }
+
+        const updatedUser = {
+            image: req.file ? req.file.path : null, // 파일이 있으면 경로 저장, 없으면 null
+        };
+
+        await User.update(updatedUser, { where: { id: loggedInUserID } });
+        req.session.data.image = updatedUser.image;
+        return res.redirect("/myPage");
+    } catch (error) {
+        console.error("프로필 이미지 업데이트 실패", error);
+        return res.status(500).send("프로필 이미지 업데이트 실패");
+    }
 };
 
 // // 탈퇴하기
 // exports.deleteUser = (req, res) => {
-//     const user = req.session.id;
+//     const user = req.user.dataValues.id;
 //     const userIDFromClient = req.body.id;
 
 //     if (user !== userIDFromClient) {
 //         return res.status(403).send("권한이 없습니다.");
 //     }
 
-//     model.User.destroy({
+//     User.destroy({
 //         where: { id: u_seq },
 //     })
 //         .then(() => {

@@ -146,7 +146,7 @@ exports.getProfile = async (req, res) => {
             return res.status(401).json({ message: "로그인이 필요합니다." });
         }
     } catch (error) {
-        res.status(500).json({ message: "프로필 조회 실패" });
+        return res.status(500).json({ message: "프로필 조회 실패" });
     }
 };
 

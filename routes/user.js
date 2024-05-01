@@ -13,23 +13,23 @@ router.post(
             .exists()
             .withMessage("아이디를 입력해주세요.")
             .bail()
-            .isLength({ min: 5 })
-            .withMessage("아이디를 5글자 이상 입력해주세요.")
+            .isLength({ min: 5, max: 12 })
+            .withMessage("아이디는 5~12자로 입력해주세요.")
             .bail(),
         body("pw")
             .trim()
             .exists()
             .withMessage("비밀번호를 입력해주세요.")
             .bail()
-            .isLength({ min: 5 })
-            .withMessage("비밀번호를 5글자 이상 입력해주세요.")
+            .isLength({ min: 5, max: 10 })
+            .withMessage("비밀번호는 5~10자로 입력해주세요.")
             .bail(),
         body("nickname")
             .trim()
             .exists()
             .withMessage("닉네임을 입력해주세요.")
             .bail()
-            .isLength({ min: 2 })
+            .isLength({ min: 3 })
             .withMessage("닉네임을 3글자 이상 입력해주세요.")
             .bail(),
         body("email")
@@ -53,14 +53,31 @@ router.post("/signin", controller.postSignin);
 // 로그아웃
 router.get("/logout", controller.getLogout);
 
-// 마이페이지관련
+// 유저 로그인 접속 업데이트
+router.patch("/stateTrue", controller.patchStateTrue);
+
+// 유저 로그아웃 접속 업데이트
+router.patch("/stateFalse", controller.patchStateFalse);
+
 // 프로필 목록
 router.get("/myPage", controller.getProfile);
+
 // 프로필 수정
 router.post("/myPage", controller.editUser);
+
 // 이미지 수정deleteUser
 router.post("/editUser", multer.uploadProfile.single("fileInput"), controller.editUser);
+
 // // 탈퇴하기
 // router.post("/deleteUser", controller.deleteUser);
+
+// 유저 랭킹 목록
+router.get("/lank", controller.getLank);
+
+// 유저 스코어 업데이트
+router.patch("/score", controller.patchScore);
+
+// 유저 검색
+router.get("/search", controller.getUser);
 
 module.exports = router;

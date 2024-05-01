@@ -1,6 +1,8 @@
 const { User } = require("../models");
 const { validationResult } = require("express-validator"); // 유효성 검증
 const passport = require("passport");
+const bcrypt = require("bcrypt");
+const { Op } = require("sequelize");
 
 // 중복검사
 exports.checkDuplicate = async (req, res) => {
@@ -17,7 +19,7 @@ exports.checkDuplicate = async (req, res) => {
             return res.send(true);
         }
     } catch {
-        res.status(500).send("server error");
+        return res.status(500).send("server error");
     }
 };
 
@@ -29,7 +31,6 @@ exports.postSignup = async (req, res) => {
         // 유효성 검증 통과X
         return res.send({ errors: errors.array() });
     }
-
     const { id, pw, nickname, email } = req.body;
 
     try {
@@ -39,13 +40,27 @@ exports.postSignup = async (req, res) => {
             pw,
             email,
             nickname,
+
+    const { id, pw, nickname, email } = req.body;
+    try {
+        // 비밀번호 암호화
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(pw, salt);
+
+        await User.create({
+            u_seq: null,
+            id: id,
+            pw: hash,
+            email: email,
+            nickname: nickname,
             score: 0,
             connect: 0,
             image: null,
         });
-        res.send(true);
-    } catch {
-        res.status(500).send("server error");
+        return res.send(true);
+    } catch (error) {
+        console.log("error", error);
+        return res.status(500).send("server error");
     }
 };
 
@@ -63,27 +78,71 @@ exports.postSignin = (req, res, next) => {
             if (loginErr) {
                 next(loginErr);
             }
-            res.status(200).json(true);
+            return res.status(200).json(userInfo);
         });
     })(req, res, next); // authenticate()는 미들웨어 함수를 반환함
 };
+
+// 로그인시 접속 상태 변경
+exports.patchStateTrue = async (req, res) => {
+    // const nowUser = req.session.passport; // 현재 유저 확인
+    if (req.user.dataValues.id) {
+        try {
+            await User.update(
+                {
+                    connect: 1,
+                },
+                {
+                    where: { u_seq: req.user.dataValues.u_seq },
+                }
+            );
+            return res.send(true);
+        } catch {
+            return res.status(500).send("server error");
+        }
+    } else {
+        return res.send("로그인이 필요합니다.");
+    }
+};
+
+// 로그아웃시 접속 상태 변경
+exports.patchStateFalse = async (req, res) => {
+    // const nowUser = req.session.passport; // 현재 유저 확인
+    if (req.user) {
+        try {
+            await User.update(
+                {
+                    connect: 0,
+                },
+                {
+                    where: { u_seq: req.user.dataValues.u_seq },
+                }
+            );
+            return res.send(true);
+        } catch {
+            return res.status(500).send("server error");
+        }
+    } else {
+        return res.send("로그인이 필요합니다.");
+    }
+};
+
 
 // 로그아웃
 exports.getLogout = (req, res) => {
     console.log("로그아웃하는 유저 세션 정보", req.session.passport);
     req.logout((err) => {
         if (err) {
-            return res.redirect("/");
+            return res.send(false);
         }
         // 로그아웃 성공(현재의 세션상태를 session에 저장한 후 리다이렉트)
         req.session.save((err) => {
-            return res.redirect("/");
+            return res.send(true);
         });
     });
 };
 
 // mypage관련
-
 exports.getProfile = async (req, res) => {
     try {
         if (!req.session.id) {
@@ -106,6 +165,41 @@ exports.getProfile = async (req, res) => {
         res.status(500).json({ message: "프로필 조회 실패" });
     }
 };
+
+exports.getProfile = async (req, res) => {
+    try {
+        if (req.session.id) {
+            const userData = await model.User.findOne({
+                where: { u_seq: req.session.data.u_seq },
+            });
+            return res.status(200).json(userData);
+        } else {
+            return res.status(401).json({ message: "로그인이 필요합니다." });
+        }
+    } catch (error) {
+        console.error("프로필 조회 실패", error);
+        return res.status(500).json({ message: "프로필 조회 실패" });
+    }
+};
+exports.postProfile = (req, res) => {
+    model.User.findOne({
+        where: {
+            id: req.session.id,
+        },
+    })
+        .then((result) => {
+            if (!result) {
+                return res.status(404).send("사용자 정보를 찾을 수 없습니다.");
+            }
+            // console.log("프로필페이지", result);
+            return res.render("profileEdit", { data: result });
+        })
+        .catch(() => {
+            //console.log("프로필 조회 실패");
+            return res.send(500).send("프로필 조회 실패");
+        });
+};
+
 exports.editUser = async (req, res) => {
     try {
         const loggedInUserID = req.session.id;
@@ -163,3 +257,49 @@ exports.uploadProfile = (req, res) => {
 //             res.status(500).send("회원 탈퇴 실패");
 //         });
 // };
+
+// 유저 랭킹 목록(임시로 상위 50명-)
+exports.getLank = async (req, res) => {
+    try {
+        const userList = await User.findAll({
+            limit: 50,
+            order: [["score", "DESC"]],
+        });
+        return res.send(userList);
+    } catch {
+        return res.status(500).send("server error");
+    }
+};
+
+// 유저 스코어 업데이트(임시로 한 판 승리할 때마다 2점씩 증가-)
+exports.patchScore = async (req, res) => {
+    const { u_seq } = req.body;
+
+    try {
+        const userInfo = await User.findOne({
+            where: { u_seq: u_seq },
+            attributes: ["score"],
+        });
+        await User.update({ score: userInfo.dataValues.score + 2 }, { where: { u_seq } });
+        return res.send(true);
+    } catch {
+        return res.status(500).send("server error");
+    }
+};
+
+// 유저 검색 (아이디)
+// get /games/search?keyword=~
+exports.getUser = async (req, res) => {
+    try {
+        const { keyword } = req.query;
+
+        const userList = await User.findAll({
+            where: {
+                id: { [Op.like]: `%${keyword}%` },
+            },
+        });
+        return res.send(userList);
+    } catch {
+        return res.status(500).send("server error");
+    }
+};

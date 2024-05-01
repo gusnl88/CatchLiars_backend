@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const { Game } = require("../models");
 
 // 게임방 생성
@@ -7,21 +8,22 @@ exports.postGame = async (req, res) => {
     const nowUser = req.session.passport; // 현재 유저 확인
     if (nowUser.user === req.user.dataValues.id) {
         try {
-            await Game.create({
+            const gameInfo = await Game.create({
                 g_seq: null,
                 g_title: title,
                 g_pw: pw,
                 g_type: type,
             });
-            res.send(true);
+            return res.send(gameInfo);
         } catch (error) {
             console.log("error", error);
-            res.status(500).send("server error");
+            return res.status(500).send("server error");
         }
     } else {
-        res.send("로그인이 필요합니다.");
+        return res.send("로그인이 필요합니다.");
     }
 };
+
 // 게임방 전체 목록 조회
 // get /games/:type
 exports.getGame = async (req, res) => {
@@ -33,9 +35,29 @@ exports.getGame = async (req, res) => {
             },
             order: [["g_seq", "DESC"]],
         });
-        res.send(gameList);
+        return res.send(gameList);
     } catch {
-        res.status(500).send("server error");
+        return res.status(500).send("server error");
+    }
+};
+
+// 게임방 검색
+// get /games/search/:type?keyword=~
+exports.getSearch = async (req, res) => {
+    try {
+        const { keyword } = req.query;
+        const { type } = req.params; // 0: 캐치라이어, 1: 마피아
+
+        const searchList = await Game.findAll({
+            where: {
+                g_type: type,
+                g_title: { [Op.like]: `%${keyword}%` },
+            },
+            order: [["g_seq", "DESC"]],
+        });
+        return res.send(searchList);
+    } catch {
+        return res.status(500).send("server error");
     }
 };
 
@@ -56,12 +78,12 @@ exports.patchGameSetting = async (req, res) => {
                     where: { g_seq },
                 }
             );
-            res.send(true);
+            return res.send(true);
         } catch {
-            res.status(500).send("server error");
+            return res.status(500).send("server error");
         }
     } else {
-        res.send("로그인이 필요합니다.");
+        return res.send("로그인이 필요합니다.");
     }
 };
 
@@ -87,7 +109,7 @@ exports.patchPlus = async (req, res) => {
                         where: { g_seq },
                     }
                 );
-                res.send(true);
+                return res.send(true);
             }
         } else {
             // 캐치 라이어
@@ -101,11 +123,11 @@ exports.patchPlus = async (req, res) => {
                         where: { g_seq },
                     }
                 );
-                res.send(true);
+                return res.send(true);
             }
         }
     } catch {
-        res.status(500).send("server error");
+        return res.status(500).send("server error");
     }
 };
 
@@ -120,7 +142,7 @@ exports.patchMinus = async (req, res) => {
         const new_total = gameInfo.g_total - 1;
 
         if (new_total <= 0) {
-            res.send(false);
+            return res.send(false);
         } else {
             await Game.update(
                 {
@@ -130,10 +152,10 @@ exports.patchMinus = async (req, res) => {
                     where: { g_seq },
                 }
             );
-            res.send(true);
+            return res.send(true);
         }
     } catch {
-        res.status(500).send("server error");
+        return res.status(500).send("server error");
     }
 };
 
@@ -146,9 +168,9 @@ exports.deleteGame = async (req, res) => {
                 g_seq,
             },
         });
-        if (game) res.send(true);
-        else res.send(false);
+        if (game) return res.send(true);
+        else return res.send(false);
     } catch {
-        res.status(500).send("server error");
+        return res.status(500).send("server error");
     }
 };

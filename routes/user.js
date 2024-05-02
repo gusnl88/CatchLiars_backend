@@ -68,7 +68,7 @@ router.patch("/myPage", controller.patchUserProfile);
 // 프로필 이미지 수정
 router.patch("/myPage/image", uploadPhoto.single("profileImage"), controller.patchUserImage);
 
-// // 탈퇴하기
+// 탈퇴하기
 router.delete("/myPage", controller.deleteUser);
 
 // 유저 랭킹 목록

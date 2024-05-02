@@ -1,5 +1,5 @@
-const { Op } = require("sequelize");
-const { DM, Message } = require("../models");
+const { Op, where } = require("sequelize");
+const { DM, Message, User } = require("../models");
 const passport = require("passport");
 
 // dm방 전체목록 조회
@@ -17,7 +17,21 @@ exports.getDM = async (req, res) => {
                 },
                 order: [["d_seq", "DESC"]],
             });
-            return res.send(userDM);
+            // 상대방의 정보를 가지고 오기 위해 상대방의 u_seq를 담아 배열로 반환
+            const f_seqList = userDM.map((DM) =>
+                DM.dataValues.f_seq !== user.u_seq ? DM.dataValues.f_seq : DM.dataValues.u_seq
+            );
+
+            let result = [];
+            for (const counter of f_seqList) {
+                const info = await User.findOne({
+                    where: { u_seq: counter },
+                    attributes: ["nickname", "image", "connect"],
+                });
+                result.push(info.dataValues);
+            }
+
+            return res.send({ dmInfo: userDM, counterInfo: result });
         } else {
             return res.status(401).send("로그인이 필요합니다.");
         }

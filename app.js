@@ -113,6 +113,7 @@ app.use(serverPrefix + "users", userRouter);
 app.use(serverPrefix + "games", gameRouter);
 app.use(serverPrefix + "friends", friendRouter);
 app.use(serverPrefix + "invites", invitationRouter);
+app.use(serverPrefix + "dms", dmRouter);
 
 // sequelize를 통해 데이터베이스 연결
 sequelize

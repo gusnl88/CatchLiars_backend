@@ -14,18 +14,18 @@ const DM = (Sequelize, DataTypes) => {
             },
             last_seq: {
                 type: DataTypes.INTEGER,
-                allowNull: false,
+                allowNull: true,
             },
             unreadcnt: {
                 type: DataTypes.INTEGER,
                 allowNull: false,
-                defaltValue: 0,
+                defaultValue: 0,
             },
         },
         {
             tableName: "DM",
             freezeTableName: true,
-            timestamps: true,
+            timestamps: false,
         }
     );
 };

@@ -2,7 +2,7 @@ const { Alarm, Message } = require("../models");
 const passport = require("passport");
 
 // 알람목록 & 알람이 뜰 id를 가져오기
-exports.getAlarmList = async (req, res) => {
+exports.getAlarm = async (req, res) => {
     try {
         if (req.session.u_seq) {
             // 해당 사용자의 알람 목록 조회

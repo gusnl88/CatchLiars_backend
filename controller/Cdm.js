@@ -83,24 +83,25 @@ exports.getDMOne = async (req, res) => {
 
 // dm방 생성
 exports.postDM = async (req, res) => {
-    const { d_seq, firstUser, secondUser } = req.body; // firstUser와 secondUser를 추가로 받아옴
+    const { firstUser, secondUser } = req.body;
     try {
+        if (!firstUser || !secondUser) {
+            return res.status(400).send("First user and second user must be provided.");
+        }
         const newDM = await DM.create({
-            d_seq: d_seq,
-            // client에서 dm신청자 firstUser, 받는사람 secondUser로 받아오기
-            u_seq: firstUser, // 첫 번째 사용자의 u_seq 저장
-            f_seq: secondUser, // 두 번째 사용자의 u_seq 저장
+            u_seq: firstUser,
+            f_seq: secondUser,
         });
         res.send(newDM);
     } catch (err) {
-        console.error(error);
-        res.status(500).send("server error");
+        console.error(err);
+        res.status(500).send("Server Error");
     }
 };
 
 // dm방 삭제
 exports.deleteDM = async (req, res) => {
-    const { d_seq } = req.params; // 요청 URL에서 d_seq를 추출
+    const { d_seq } = req.body; // 요청 URL에서 d_seq를 추출
 
     try {
         const deletedDM = await DM.destroy({

@@ -9,6 +9,6 @@ router.get("/:d_seq", controller.getDMOne);
 // 디엠방 생성
 router.post("/", controller.postDM);
 // 디엠방 삭제
-router.delete("/:d_seq", controller.deleteDM);
+router.delete("/", controller.deleteDM);
 
 module.exports = router;

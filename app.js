@@ -7,9 +7,10 @@ const PORT = process.env.PORT;
 const { sequelize } = require("./models");
 const indexRouter = require("./routes");
 const userRouter = require("./routes/user");
+const multerRouter = require("./middleware/upload");
 const gameRouter = require("./routes/game");
 const dmRouter = require("./routes/dm");
-// const AlarmRouter = require("./router/alarm");
+const alarmRouter = require("./routes/alarm");
 const friendRouter = require("./routes/friend");
 const invitationRouter = require("./routes/invitation");
 const serverPrefix = "/";
@@ -114,6 +115,7 @@ app.use(serverPrefix + "games", gameRouter);
 app.use(serverPrefix + "friends", friendRouter);
 app.use(serverPrefix + "invites", invitationRouter);
 app.use(serverPrefix + "dms", dmRouter);
+app.use(serverPrefix + "alarms", alarmRouter);
 
 // sequelize를 통해 데이터베이스 연결
 sequelize

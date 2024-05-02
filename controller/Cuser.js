@@ -173,12 +173,16 @@ exports.patchUserProfile = async (req, res) => {
             return res.status(401).send("현재 비밀번호가 일치하지 않습니다.");
         }
 
-        // 새 비밀번호를 암호화하여 업데이트
-        const salt = await bcrypt.genSalt(10);
-        const hash = await bcrypt.hash(newPassword, salt);
-
-        // 업데이트할 유저 정보 설정
-        const updatedUser = { nickname, email, pw: hash };
+        // 새 비밀번호가 전송되지 않았을 경우 기존 비밀번호를 유지
+        let updatedUser;
+        if (newPassword) {
+            // 새 비밀번호를 암호화하여 업데이트
+            const salt = await bcrypt.genSalt(10);
+            const hash = await bcrypt.hash(newPassword, salt);
+            updatedUser = { nickname, email, pw: hash };
+        } else {
+            updatedUser = { nickname, email };
+        }
 
         // 유저 정보 업데이트
         await User.update(updatedUser, { where: { id: loggedInUserID } });

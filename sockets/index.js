@@ -274,12 +274,20 @@ function socketHandler(server) {
                 // 발생한 오류를 적절히 처리합니다.
             }
         });
+
+        ///////////////////////////////////////////
+        // catchLiar
+
         socket.on("drawing", (data) => {
             // console.log("Received drawing data:", data);
             io.emit("drawing", data);
         });
 
-        ///////////////////////////////////////////
+        // socket.on("drawing1", (data) => {
+        //     // console.log("Received drawing data:", data);
+        //     io.emit("drawing1", data);
+        // });
+
         const MAX_PLAYERS = 6; // 최대 플레이어 수
 
         socket.emit("gameId", socket.id);
@@ -301,7 +309,7 @@ function socketHandler(server) {
             } else {
                 // 존재하지 않는 경우, 새로운 플레이어를 추가
                 players.push(player);
-                console.log(">>", players);
+                // console.log(">>", players);
                 const currentPlayers = players.length;
                 if (currentPlayers > MAX_PLAYERS) {
                     // 만약 최대 플레이어 수를 초과하면 에러 메시지를 전송합니다.
@@ -314,6 +322,21 @@ function socketHandler(server) {
             // Object.values(nickInfo)= ['닉네임1','닉네임2']
             // if (Object.values(player).includes(socket.id)) {
         });
+
+        ////////////////
+        let gameData;
+        // 클라이언트로부터의 게임 데이터 업데이트 요청 처리
+        socket.on("gamestart", (gameStarted) => {
+            io.emit("start", gameStarted);
+        });
+
+        socket.on("updateGameData", (data) => {
+            // console.log(">>>", data);
+            io.emit("updateGameData", data);
+        });
+
+        // 초기 게임 데이터 전송
+        socket.emit("updateGameData", gameData);
 
         //퇴장
         socket.on("disconnect", () => {

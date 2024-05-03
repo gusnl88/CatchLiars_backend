@@ -1,4 +1,6 @@
-const { Message } = require("../models");
+const { where } = require("sequelize");
+const { Message ,User} = require("../models");
+const { Op } = require("sequelize");
 
 const socketIO = require("socket.io");
 
@@ -231,24 +233,58 @@ function socketHandler(server) {
 
         // -------------------------------------------------------------------dm방
         // dm방 입장 
-        socket.on("room",({roomId,userId})=>{
+        socket.on("room",async({roomId,userId,u_seq})=>{
             socket.join(`dm_room_${roomId}`);
             let message=`${userId}님이 입장하셨습니다.`
             if(!dmuser[roomId]){
                 dmuser[roomId]=[];
             }
+            
+            const msg = await Message.update(
+                { is_read: 1 },
+                {
+                    where: {
+                        d_seq: roomId,
+                        u_seq: {
+                            [Op.ne]: u_seq
+                        },
+                        is_read: 0
+                    }
+                }
+            );
+            const msgList = await Message.findAll({
+                where: {
+                    d_seq: roomId
+                },
+                include: {
+                    model: User,
+                    attributes: ['id', 'nickName'] // 가져오고 싶은 아이디 관련 정보들
+                }
+            });
+            console.log(msgList)
+            io.to(`dm_room_${roomId}`).emit("msgList",msgList)
+            if(Object.keys(dmuser[roomId]).length===2){
+            }
             dmuser[roomId][socket.id]={userId}
             console.log(dmuser)
-            io.to(`dm_room_${roomId}`).emit("message", {message:message});
+            socket.broadcast.to(`dm_room_${roomId}`).emit("message", { message: message });
 
         })
-         socket.on("send", async ({msg,roomId,loginUser}) => {
+         socket.on("send", async ({msg,roomId,loginUser,u_seq}) => {
             console.log(msg);
             console.log(loginUser);
-            
+            let message;
+            const currentTime = new Date().toISOString();
+            console.log(Object.keys(dmuser[roomId]).length)
+                message = Message.create({
+                    u_seq: u_seq,
+                    d_seq: roomId,
+                    create_at: currentTime,
+                    content: msg
+                });
             // msgData={myNick, dm, msg}
             let newMessage=`${loginUser} : ${msg}`
-            io.to(`dm_room_${roomId}`).emit("message",{message:newMessage,sendUser:loginUser});
+            io.to(`dm_room_${roomId}`).emit("message",{message:newMessage,sendUser:loginUser,is_read:message.is_read});
         });
         // 퇴장
         socket.on("disconnect", () => {

@@ -28,7 +28,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
     cors({
-        origin: "http://localhost:3000", // 클라이언트의 주소
+        origin: true, // 클라이언트의 주소
         credentials: true, // 쿠키 허용
     })
 );

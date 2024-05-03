@@ -10,7 +10,7 @@ const DM = (Sequelize, DataTypes) => {
             },
             f_seq: {
                 type: DataTypes.INTEGER,
-                allowNull: true,
+                allowNull: false,
             },
             last_seq: {
                 type: DataTypes.INTEGER,

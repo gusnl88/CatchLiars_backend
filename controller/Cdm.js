@@ -4,9 +4,12 @@ const passport = require("passport");
 
 // dm방 전체목록 조회
 exports.getDM = async (req, res) => {
+    console.log('진입')
     try {
         const user = req.user.dataValues;
+        console.log(user)
         if (user) {
+            console.log("ㅇㅇㅇㅇㅇㅇ")
             // 사용자의 u_seq와 f_seq가 모두 해당하는 DM을 찾음
             const userDM = await DM.findAll({
                 where: {
@@ -17,29 +20,33 @@ exports.getDM = async (req, res) => {
                 },
                 order: [["d_seq", "DESC"]],
             });
-            // 상대방의 정보를 가지고 오기 위해 상대방의 u_seq를 담아 배열로 반환
-            const f_seqList = userDM.map((DM) =>
-                DM.dataValues.f_seq !== user.u_seq ? DM.dataValues.f_seq : DM.dataValues.u_seq
-            );
+            console.log(userDM,"userdm")
 
-            let result = [];
-            for (const counter of f_seqList) {
-                const info = await User.findOne({
-                    where: { u_seq: counter },
-                    attributes: ["nickname", "image", "connect"],
-                });
-                result.push(info.dataValues);
+            // 상대방의 정보를 userDM 배열에 추가
+            for (const DM of userDM) {
+                if (DM.dataValues.f_seq !== user.u_seq) {
+                    const counterInfo = await User.findOne({
+                        where: { u_seq: DM.dataValues.f_seq },
+                        attributes: ["id", "image", "connect"],
+                    });
+                    DM.dataValues.counterInfo = counterInfo.dataValues;
+                } else {
+                    const counterInfo = await User.findOne({
+                        where: { u_seq: DM.dataValues.u_seq },
+                        attributes: ["id", "image", "connect"],
+                    });
+                    DM.dataValues.counterInfo = counterInfo.dataValues;
+                }
             }
 
-            return res.send({ dmInfo: userDM, counterInfo: result });
-        } else {
-            return res.status(401).send("로그인이 필요합니다.");
+            return res.send({ dmInfo: userDM });
         }
     } catch (error) {
-        console.error(error);
-        return res.status(500).send("Internal Server Error");
+        console.error("Error fetching data:", error);
+        return res.status(500).json({ message: "Internal server error" });
     }
-};
+}
+
 
 // DM방 1개 선택 및 지난 메시지 목록 조회
 exports.getDMOne = async (req, res) => {

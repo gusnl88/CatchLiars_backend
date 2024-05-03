@@ -5,7 +5,7 @@ const controller = require("../controller/Cdm");
 // 디엠방 목록
 router.get("/", controller.getDM);
 // 디엠방 1개 선택
-router.get("/:d_seq", controller.getDMOne);
+router.get("/getOne", controller.getDMOne);
 // 디엠방 생성
 router.post("/", controller.postDM);
 // 디엠방 삭제

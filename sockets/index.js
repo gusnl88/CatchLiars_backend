@@ -21,19 +21,24 @@ function socketHandler(server) {
 
         console.log("Client connected");
 
-        socket.on("joinRoom", ({ roomId, userId }) => {
-            socket.join(`room_${roomId}`);
-            if (!userList[roomId]) {
-                userList[roomId] = {}; // roomId를 키로 가지는 객체 생성
+        socket.on("joinRoom", ({ roomId, userId, isDM }) => {
+            if (isDM) {
+                socket.join(`dm_room_${d_seq}`);
+                console.log(`Socket ${socket.id} joined dm room ${d_seq}`);
+            } else {
+                socket.join(`room_${roomId}`);
+                if (!userList[roomId]) {
+                    userList[roomId] = {}; // roomId를 키로 가지는 객체 생성
+                }
+                userList[roomId][socket.id] = { userId, roomId }; // roomId 안에 socket.id를 키로 가지는 객체 생성
+                console.log("유저리스트", userList);
+                console.log(`환영합니다 ${userId} room_${roomId}`);
+                const message = `${userId}님이 room_${roomId}방에 입장하셨습니다.`;
+
+                io.to(`room_${roomId}`).emit("userList", getUserList(roomId));
+
+                socket.broadcast.to(`room_${roomId}`).emit("message", { message, type: "message" });
             }
-            userList[roomId][socket.id] = { userId, roomId }; // roomId 안에 socket.id를 키로 가지는 객체 생성
-            console.log("유저리스트", userList);
-            console.log(`환영합니다 ${userId} room_${roomId}`);
-            const message = `${userId}님이 room_${roomId}방에 입장하셨습니다.`;
-
-            io.to(`room_${roomId}`).emit("userList", getUserList(roomId));
-
-            socket.broadcast.to(`room_${roomId}`).emit("message", { message, type: "message" });
         });
 
         socket.on("message", ({ roomId, message }) => {

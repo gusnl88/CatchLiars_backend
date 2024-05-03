@@ -25,7 +25,7 @@ const DM = (Sequelize, DataTypes) => {
         {
             tableName: "DM",
             freezeTableName: true,
-            timestamps: false,
+            timestamps: true,
         }
     );
 };

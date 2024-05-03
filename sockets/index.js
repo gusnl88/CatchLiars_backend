@@ -43,7 +43,8 @@ function socketHandler(server) {
 
         socket.on("message", ({ roomId, dm, msg }) => {
             let message = `${userList[roomId][socket.id].userId} : ${msg}`;
-            const dmSocketId = Object.keys(userList[roomId]).find(//dm보낼 상대방 소켓 id 찾기
+            const dmSocketId = Object.keys(userList[roomId]).find(
+                //dm보낼 상대방 소켓 id 찾기
                 (key) => userList[roomId][key].userId === dm
             );
             if (dm === "all") {
@@ -107,23 +108,41 @@ function socketHandler(server) {
                     }
                 }
                 io.to(`room_${roomId}`).emit("message", { message, type: "notice" });
-                io.to(`room_${roomId}`).emit("message", { message, type: "message" ,dm:"dm"});
+                io.to(`room_${roomId}`).emit("message", { message, type: "message", dm: "dm" });
                 // 위에서 message 변수를 선언해주어야 함
                 message = `${maxVote}님이 탈락하셨습니다.`;
-                socket.broadcast.to(`room_${roomId}`).emit("message", { message, type: "message" ,dm:"dm"});
+                socket.broadcast
+                    .to(`room_${roomId}`)
+                    .emit("message", { message, type: "message", dm: "dm" });
                 resetVote(roomId); // 투표완료후 리스트 삭제.
                 const userIdList = Object.values(userList[roomId]).map((user) => user.userId);
 
                 if (Object.keys(mafiaList[roomId]).length >= Object.keys(citizen[roomId]).length) {
                     message = "마피아가 승리했습니다.수고하셧습니다"; //마피아가 승리했을경우 로직
-                    io.to(`room_${roomId}`).emit("message", { message, type: "notice" ,dm:"notice"});
-                    io.to(`room_${roomId}`).emit("message", { message, type: "messeage" ,dm:"dm"});
+                    io.to(`room_${roomId}`).emit("message", {
+                        message,
+                        type: "notice",
+                        dm: "notice",
+                    });
+                    io.to(`room_${roomId}`).emit("message", {
+                        message,
+                        type: "messeage",
+                        dm: "dm",
+                    });
                     io.to(`room_${roomId}`).emit("victory", userIdList);
                     resetMafiaCitizen(roomId);
                 } else if (mafiaList[roomId].length === 0) {
                     message = "시민이 승리했습니다.수고하셧습니다"; // 시민이 승리했을 경우 로직
-                    io.to(`room_${roomId}`).emit("message", { message, type: "notice" ,dm:"notice"});
-                    io.to(`room_${roomId}`).emit("message", { message, type: "messeage" ,dm:"dm"});
+                    io.to(`room_${roomId}`).emit("message", {
+                        message,
+                        type: "notice",
+                        dm: "notice",
+                    });
+                    io.to(`room_${roomId}`).emit("message", {
+                        message,
+                        type: "messeage",
+                        dm: "dm",
+                    });
                     io.to(`room_${roomId}`).emit("victory", userIdList);
                     resetMafiaCitizen(roomId);
                 } else {
@@ -133,7 +152,7 @@ function socketHandler(server) {
                         mafiaList: mafiaList[roomId],
                         isDaytime: isDaytime,
                         userList: userList[roomId],
-                        dm:"notice"
+                        dm: "notice",
                     });
                 }
 
@@ -181,16 +200,14 @@ function socketHandler(server) {
                     io.to(users[i]).emit("job", { job: "시민", mafiaList: [] });
                 }
             }
-
         }
 
         // 게임 시작 이벤트
         socket.on("startGame", ({ roomId }) => {
-            let message='낮입니다 의견을 자유롭게 나누세요';
+            let message = "낮입니다 의견을 자유롭게 나누세요";
             io.to(`room_${roomId}`).emit("message", { message, type: "message", dm: "dm" });
             setMafia(roomId);
             console.log("마피아리스트", mafiaList);
-
         });
         socket.on("disconnect", () => {
             for (const roomId in userList) {
@@ -201,7 +218,7 @@ function socketHandler(server) {
                     io.to(`room_${roomId}`).emit("userList", getUserList(roomId));
                     socket.broadcast
                         .to(`room_${roomId}`)
-                        .emit("message", { message, type: "message" ,dm:"dm"});
+                        .emit("message", { message, type: "message", dm: "dm" });
                 }
             }
         });
@@ -213,6 +230,8 @@ function socketHandler(server) {
             }
             return userLists;
         }
+
+        // /////////////////////////////////////////////////
         socket.on("checkNick", (nickname) => {
             // console.log(nickname);
 
@@ -282,14 +301,9 @@ function socketHandler(server) {
         // catchLiar
 
         socket.on("drawing", (data) => {
-            // console.log("Received drawing data:", data);
-            io.emit("drawing", data);
+            console.log("Received drawing data:", data);
+            io.emit("drawing2", data);
         });
-
-        // socket.on("drawing1", (data) => {
-        //     // console.log("Received drawing data:", data);
-        //     io.emit("drawing1", data);
-        // });
 
         const MAX_PLAYERS = 6; // 최대 플레이어 수
 
@@ -338,21 +352,42 @@ function socketHandler(server) {
             io.emit("updateGameData", data);
         });
 
-        // 초기 게임 데이터 전송
-        socket.emit("updateGameData", gameData);
+        ///////////////////////////////////////////////////////////////
+        // 채팅
+        socket.on("info", (data) => {
+            console.log(">>", data.nickName);
+
+            nickInfo[socket.id] = data.nickName;
+            console.log(nickInfo);
+            io.emit("notice1", `${nickInfo[socket.id]}님이 입장하셨습니다.`);
+
+            io.emit("updateNickname", nickInfo);
+        });
+
+        socket.on("sendMsg", (msgData) => {
+            socket.broadcast.emit("message0", {
+                nick: msgData.nick,
+                message: msgData.msg,
+            });
+        });
+
+        socket.on("disconnect", () => {
+            if (nickInfo[socket.id])
+                io.emit("notice1", `${nickInfo[socket.id]}님이 퇴장하셨습니다.`);
+            delete nickInfo[socket.id];
+            io.emit("updateNickname", nickInfo);
+        });
 
         //퇴장
         socket.on("disconnect", () => {
-            // 퇴장한 플레이어의 소켓 ID를 가져옵니다.
+            // 퇴장한 플레이어의 소켓 ID
             const disconnectedPlayerIndex = players.findIndex(
                 (player) => player.socketId === socket.id
             );
 
             if (disconnectedPlayerIndex !== -1) {
-                // 해당 플레이어가 배열에 존재하는 경우에만 삭제합니다.
-
-                players.splice(disconnectedPlayerIndex, 1); // 배열에서 해당 플레이어 삭제  (해당 인덱스에서 하나만 삭제)
-                io.emit("updateUserId", players); // 변경된 플레이어 목록을 클라이언트에게 전달
+                players.splice(disconnectedPlayerIndex, 1); // (해당 인덱스에서 하나만 삭제)
+                io.emit("updateUserId", players);
             }
         });
     });

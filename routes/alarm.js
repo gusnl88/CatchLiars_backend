@@ -9,6 +9,6 @@ router.get("/", controller.getAlarm);
 // router.post("/", controller.addAlarm);
 
 // 알람삭제
-router.delete("/alarm", controller.deleteAlarm);
+router.delete("/", controller.deleteAlarm);
 
 module.exports = router;

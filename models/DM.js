@@ -10,7 +10,7 @@ const DM = (Sequelize, DataTypes) => {
             },
             f_seq: {
                 type: DataTypes.INTEGER,
-                allowNull: false,
+                allowNull: true,
             },
             last_seq: {
                 type: DataTypes.INTEGER,
@@ -25,7 +25,7 @@ const DM = (Sequelize, DataTypes) => {
         {
             tableName: "DM",
             freezeTableName: true,
-            timestamps: false,
+            timestamps: true,
         }
     );
 };

@@ -29,10 +29,10 @@ exports.getDM = async (req, res) => {
 
 // DM방 1개 선택 및 지난 메시지 목록 조회
 exports.getDMOne = async (req, res) => {
-    const { d_seq } = req.params; // URL에서 d_seq 추출
+    const { d_seq } = req.body; // URL에서 d_seq 추출
     try {
-        if (req.session.u_seq) {
-            const u_seq = req.session.u_seq; // 현재 사용자의 u_seq
+        if (req.user.dataValues) {
+            const u_seq = req.user.dataValues; // 현재 사용자의 u_seq
 
             // DM 방 조회
             const userDM = await DM.findOne({
@@ -88,32 +88,52 @@ exports.postDM = async (req, res) => {
         if (!firstUser || !secondUser) {
             return res.status(400).send("First user and second user must be provided.");
         }
-        const newDM = await DM.create({
-            u_seq: firstUser,
-            f_seq: secondUser,
+
+        // 이미 생성된 DM 중에서 f_seq와 일치하는 DM이 있는지 확인
+        const existingDM = await DM.findOne({
+            where: {
+                [Op.or]: [
+                    { u_seq: firstUser, f_seq: secondUser },
+                    { u_seq: secondUser, f_seq: firstUser },
+                ],
+            },
         });
-        res.send(newDM);
+
+        // 이미 생성된 DM이 없으면 새로운 DM 생성
+        if (!existingDM) {
+            const newDM = await DM.create({
+                u_seq: firstUser,
+                f_seq: secondUser,
+            });
+            return res.send(newDM);
+        } else {
+            return res.status(400).send("DM room already exists.");
+        }
     } catch (err) {
         console.error(err);
         res.status(500).send("Server Error");
     }
 };
 
+// 시간되면 -> 삭제원하는 해당 유저의 u_seq만 사라지고 u_seq가 0이되면 dm방이 삭제되도록 로직 바꾸기
 // dm방 삭제
 exports.deleteDM = async (req, res) => {
-    const { d_seq } = req.body; // 요청 URL에서 d_seq를 추출
+    const { d_seq } = req.body;
+    const { u_seq } = req.user.dataValues; // 현재 사용자의 u_seq
 
     try {
-        const deletedDM = await DM.destroy({
-            where: {
-                d_seq: d_seq, // 해당 d_seq를 가진 DM을 삭제
-            },
-        });
-        if (deletedDM) {
-            res.send(true); // 삭제 성공 시 true를 클라이언트에게 응답으로 보냄
-        } else {
-            res.send(false); // 삭제된 항목이 없으면 false를 클라이언트에게 응답으로 보냄
+        // DM을 조회하여 해당 DM의 정보를 가져옴
+        const dm = await DM.findByPk(d_seq);
+
+        // DM이 존재하지 않는 경우
+        if (!dm) {
+            return res.status(404).send("DM room not found");
         }
+
+        // DM에서 현재 유저의 u_seq를 삭제
+        await dm.destroy(u_seq); // 현재 유저의 u_seq 삭제
+
+        res.send(true); // 삭제 성공 시 true를 클라이언트에게 응답으로 보냄
     } catch (error) {
         console.error(error);
         res.status(500).send("Server Error");

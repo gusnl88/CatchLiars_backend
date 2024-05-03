@@ -11,7 +11,7 @@ const production = {
     username: process.env.DB_PRODUCTION_USERNAME,
     password: process.env.DB_PRODUCTION_PASSWORD,
     database: process.env.DB_PRODUCTION_DATABASE,
-    host: "127.0.0.1",
+    host: process.env.DB_PRODUCTION_HOST,
     dialect: "mysql",
 };
-module.exports = { development,production };
+module.exports = { development, production };

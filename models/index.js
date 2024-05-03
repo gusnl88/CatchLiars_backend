@@ -2,8 +2,8 @@
 
 const Sequelize = require("sequelize");
 let config;
-if (NODE_ENV) {
-    config = require(__dirname + "/../config/config.js")[NODE_ENV];
+if (process.env.NODE_ENV) {
+    config = require(__dirname + "/../config/config.js")[process.env.NODE_ENV];
 } else {
     config = require(__dirname + "/../config/config.js")["development"];
 }

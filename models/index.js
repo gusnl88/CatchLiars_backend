@@ -1,7 +1,12 @@
 "use strict";
 
 const Sequelize = require("sequelize");
-const config = require(__dirname + "/../config/config.js")["development"];
+let config;
+if (NODE_ENV) {
+    config = require(__dirname + "/../config/config.js")[NODE_ENV];
+} else {
+    config = require(__dirname + "/../config/config.js")["development"];
+}
 const db = {};
 
 const sequelize = new Sequelize(config.database, config.username, config.password, config);
@@ -62,6 +67,5 @@ db.Alarm = AlarmModel;
 
 db.Friend = FriendModel;
 db.Invitation = InvitationModel;
-
 
 module.exports = db;

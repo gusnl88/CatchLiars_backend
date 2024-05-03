@@ -46,7 +46,7 @@ exports.getDMOne = async (req, res) => {
     const { d_seq } = req.body; // URL에서 d_seq 추출
     try {
         if (req.user.dataValues) {
-            const u_seq = req.user.dataValues; // 현재 사용자의 u_seq
+            const currentUser = req.user.dataValues; // 현재 사용자 정보
 
             // DM 방 조회
             const userDM = await DM.findOne({
@@ -57,7 +57,7 @@ exports.getDMOne = async (req, res) => {
                 return res.status(404).send("DM room not found");
             }
 
-            // 해당 DM 방과 연관된 메시지들을 조회
+            // 해당 DM 방에 있는 모든 메시지를 가져옴
             const messages = await Message.findAll({
                 where: { d_seq: d_seq },
             });
@@ -65,7 +65,7 @@ exports.getDMOne = async (req, res) => {
             // 메시지의 is_read를 0에서 1로 변경
             await Message.update(
                 { is_read: 1 }, // is_read를 1로 변경
-                { where: { d_seq: d_seq, u_seq: { [Op.ne]: u_seq } } } // 자신이 보낸 메시지를 제외한 메시지만 업데이트
+                { where: { d_seq: d_seq, u_seq: { [Op.ne]: currentUser.u_seq } } } // 현재 사용자가 아닌 상대방의 메시지만 업데이트
             );
 
             // 모든 메시지가 읽혔는지 확인하고 unreadcnt를 조정
@@ -73,7 +73,7 @@ exports.getDMOne = async (req, res) => {
                 where: {
                     d_seq: d_seq,
                     is_read: 0, // 아직 읽지 않은 메시지만 카운트
-                    u_seq: { [Op.ne]: u_seq }, // 자신이 보낸 메시지를 제외
+                    u_seq: currentUser.u_seq, // 현재 사용자가 아닌 상대방의 메시지 카운트
                 },
             });
 

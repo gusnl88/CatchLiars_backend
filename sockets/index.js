@@ -1,7 +1,6 @@
 const { where } = require("sequelize");
-const { Message, User } = require("../models");
+const { Message, User, DM } = require("../models");
 const { Op } = require("sequelize");
-
 const socketIO = require("socket.io");
 
 function socketHandler(server) {
@@ -18,6 +17,7 @@ function socketHandler(server) {
     const vote = {};
     const mafiaList = {};
     const citizen = {};
+    const nickInfo = {};
     io.on("connection", (socket) => {
         // io.emit("notice", `${socket.id}님이 입장하셨습니다.`);
 
@@ -262,41 +262,74 @@ function socketHandler(server) {
             io.to(`dm_room_${roomId}`).emit("msgList", msgList);
             if (Object.keys(dmuser[roomId]).length === 2) {
             }
-            dmuser[roomId][socket.id] = { userId };
+
+            dmuser[roomId][socket.id] = { userId, u_seq };
             console.log(dmuser);
             socket.broadcast.to(`dm_room_${roomId}`).emit("message", { message: message });
         });
         socket.on("send", async ({ msg, roomId, loginUser, u_seq }) => {
             console.log(msg);
             console.log(loginUser);
-            let message;
             const currentTime = new Date().toISOString();
             console.log(Object.keys(dmuser[roomId]).length);
-            message = Message.create({
-                u_seq: u_seq,
-                d_seq: roomId,
-                create_at: currentTime,
-                content: msg,
-            });
+
+            const dmuserLength = Object.keys(dmuser[roomId]).length;
+            let message = [];
+            if (dmuserLength === 2) {
+                message = await Message.create({
+                    u_seq: u_seq,
+                    d_seq: roomId,
+                    create_at: currentTime,
+                    content: msg,
+                    is_read: 1,
+                });
+            } else {
+                message = await Message.create({
+                    u_seq: u_seq,
+                    d_seq: roomId,
+                    create_at: currentTime,
+                    content: msg,
+                });
+            }
+            console.log(message.is_read ? "읽었어" : "안읽었어");
             // msgData={myNick, dm, msg}
-            let newMessage = `${loginUser} : ${msg}`;
+            // let newMessage=`${loginUser} : ${message.content}`
             io.to(`dm_room_${roomId}`).emit("message", {
-                message: newMessage,
+                message: message.content,
                 sendUser: loginUser,
                 is_read: message.is_read,
+                create_at: message.create_at,
+
             });
         });
         // 퇴장
         socket.on("disconnect", () => {
             console.log("아웃");
+            let userId;
+            let roomIds;
             for (const roomId in dmuser) {
                 if (dmuser[roomId][socket.id]) {
                     console.log(dmuser[roomId][socket.id].userId);
-                    const userId = dmuser[roomId][socket.id].userId;
+                    roomIds = roomId;
+                    userId = dmuser[roomId][socket.id].userId;
+                    userSeq = dmuser[roomId][socket.id].u_seq;
+
                     let message = `${userId}님이 퇴장 하셨습니다.`;
                     io.to(`dm_room_${roomId}`).emit("message", { message: message, out: userId });
                 }
             }
+
+            console.log(dmuser[roomIds][socket.id]);
+            delete dmuser[roomIds][socket.id];
+            DM.update(
+                {
+                    last_seq: userSeq,
+                },
+                {
+                    where: { d_seq: roomIds },
+                }
+            );
+
         });
 
         ///////////////////////////////////////////
@@ -373,16 +406,13 @@ function socketHandler(server) {
             });
         });
 
+        //퇴장
         socket.on("disconnect", () => {
+            // 퇴장한 플레이어의 소켓 ID
             if (nickInfo[socket.id])
                 io.emit("notice1", `${nickInfo[socket.id]}님이 퇴장하셨습니다.`);
             delete nickInfo[socket.id];
             io.emit("updateNickname", nickInfo);
-        });
-
-        //퇴장
-        socket.on("disconnect", () => {
-            // 퇴장한 플레이어의 소켓 ID
             const disconnectedPlayerIndex = players.findIndex(
                 (player) => player.socketId === socket.id
             );

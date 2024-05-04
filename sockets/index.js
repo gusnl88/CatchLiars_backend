@@ -1,5 +1,5 @@
 const { where } = require("sequelize");
-const { Message ,User} = require("../models");
+const { Message, User } = require("../models");
 const { Op } = require("sequelize");
 
 const socketIO = require("socket.io");
@@ -24,20 +24,18 @@ function socketHandler(server) {
         console.log("Client connected");
 
         socket.on("joinRoom", ({ roomId, userId }) => {
-          
-                socket.join(`room_${roomId}`);
-                if (!userList[roomId]) {
-                    userList[roomId] = {}; // roomId를 키로 가지는 객체 생성
-                }
-                userList[roomId][socket.id] = { userId, roomId }; // roomId 안에 socket.id를 키로 가지는 객체 생성
-                console.log("유저리스트", userList);
-                console.log(`환영합니다 ${userId} room_${roomId}`);
-                const message = `${userId}님이 room_${roomId}방에 입장하셨습니다.`;
+            socket.join(`room_${roomId}`);
+            if (!userList[roomId]) {
+                userList[roomId] = {}; // roomId를 키로 가지는 객체 생성
+            }
+            userList[roomId][socket.id] = { userId, roomId }; // roomId 안에 socket.id를 키로 가지는 객체 생성
+            console.log("유저리스트", userList);
+            console.log(`환영합니다 ${userId} room_${roomId}`);
+            const message = `${userId}님이 room_${roomId}방에 입장하셨습니다.`;
 
-                io.to(`room_${roomId}`).emit("userList", getUserList(roomId));
+            io.to(`room_${roomId}`).emit("userList", getUserList(roomId));
 
-                socket.broadcast.to(`room_${roomId}`).emit("message", { message, type: "message" });
-            
+            socket.broadcast.to(`room_${roomId}`).emit("message", { message, type: "message" });
         });
 
         socket.on("message", ({ roomId, dm, msg }) => {
@@ -230,76 +228,76 @@ function socketHandler(server) {
             return userLists;
         }
 
-
         // -------------------------------------------------------------------dm방
-        // dm방 입장 
-        socket.on("room",async({roomId,userId,u_seq})=>{
+        // dm방 입장
+        socket.on("room", async ({ roomId, userId, u_seq }) => {
             socket.join(`dm_room_${roomId}`);
-            let message=`${userId}님이 입장하셨습니다.`
-            if(!dmuser[roomId]){
-                dmuser[roomId]=[];
+            let message = `${userId}님이 입장하셨습니다.`;
+            if (!dmuser[roomId]) {
+                dmuser[roomId] = [];
             }
-            
+
             const msg = await Message.update(
                 { is_read: 1 },
                 {
                     where: {
                         d_seq: roomId,
                         u_seq: {
-                            [Op.ne]: u_seq
+                            [Op.ne]: u_seq,
                         },
-                        is_read: 0
-                    }
+                        is_read: 0,
+                    },
                 }
             );
             const msgList = await Message.findAll({
                 where: {
-                    d_seq: roomId
+                    d_seq: roomId,
                 },
                 include: {
                     model: User,
-                    attributes: ['id', 'nickName'] // 가져오고 싶은 아이디 관련 정보들
-                }
+                    attributes: ["id", "nickName"], // 가져오고 싶은 아이디 관련 정보들
+                },
             });
-            console.log(msgList)
-            io.to(`dm_room_${roomId}`).emit("msgList",msgList)
-            if(Object.keys(dmuser[roomId]).length===2){
+            console.log(msgList);
+            io.to(`dm_room_${roomId}`).emit("msgList", msgList);
+            if (Object.keys(dmuser[roomId]).length === 2) {
             }
-            dmuser[roomId][socket.id]={userId}
-            console.log(dmuser)
+            dmuser[roomId][socket.id] = { userId };
+            console.log(dmuser);
             socket.broadcast.to(`dm_room_${roomId}`).emit("message", { message: message });
-
-        })
-         socket.on("send", async ({msg,roomId,loginUser,u_seq}) => {
+        });
+        socket.on("send", async ({ msg, roomId, loginUser, u_seq }) => {
             console.log(msg);
             console.log(loginUser);
             let message;
             const currentTime = new Date().toISOString();
-            console.log(Object.keys(dmuser[roomId]).length)
-                message = Message.create({
-                    u_seq: u_seq,
-                    d_seq: roomId,
-                    create_at: currentTime,
-                    content: msg
-                });
+            console.log(Object.keys(dmuser[roomId]).length);
+            message = Message.create({
+                u_seq: u_seq,
+                d_seq: roomId,
+                create_at: currentTime,
+                content: msg,
+            });
             // msgData={myNick, dm, msg}
-            let newMessage=`${loginUser} : ${msg}`
-            io.to(`dm_room_${roomId}`).emit("message",{message:newMessage,sendUser:loginUser,is_read:message.is_read});
+            let newMessage = `${loginUser} : ${msg}`;
+            io.to(`dm_room_${roomId}`).emit("message", {
+                message: newMessage,
+                sendUser: loginUser,
+                is_read: message.is_read,
+            });
         });
         // 퇴장
         socket.on("disconnect", () => {
-            console.log("아웃")
+            console.log("아웃");
             for (const roomId in dmuser) {
                 if (dmuser[roomId][socket.id]) {
-                    console.log(dmuser[roomId][socket.id].userId)
-                    const userId=dmuser[roomId][socket.id].userId;
-                    let message=`${userId}님이 퇴장 하셨습니다.`
-                    io.to(`dm_room_${roomId}`).emit("message", {message:message,out:userId});
-                            }
-                        }            
+                    console.log(dmuser[roomId][socket.id].userId);
+                    const userId = dmuser[roomId][socket.id].userId;
+                    let message = `${userId}님이 퇴장 하셨습니다.`;
+                    io.to(`dm_room_${roomId}`).emit("message", { message: message, out: userId });
+                }
+            }
         });
-
-       
 
         ///////////////////////////////////////////
         // catchLiar

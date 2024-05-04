@@ -123,9 +123,7 @@ exports.deleteInvitation = async (req, res) => {
 // 초대 목록 조회
 // get /invites/list
 exports.getInvitation = async (req, res) => {
-    const nowUser = req.session.passport; // 현재 유저 확인
-
-    if (nowUser.user === req.user.dataValues.id) {
+    if (req.user.dataValues.id) {
         try {
             const invitationList = await Invitation.findAll({
                 where: {

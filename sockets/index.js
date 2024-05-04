@@ -1,5 +1,5 @@
 const { where } = require("sequelize");
-const { Message, User, DM } = require("../models");
+const { Message, User, DM, Game } = require("../models");
 const { Op } = require("sequelize");
 const socketIO = require("socket.io");
 
@@ -207,6 +207,7 @@ function socketHandler(server) {
             console.log("마피아리스트", mafiaList);
         });
         socket.on("disconnect", () => {
+            console.log("============퇴장1", userList);
             for (const roomId in userList) {
                 if (userList[roomId][socket.id]) {
                     const { userId } = userList[roomId][socket.id];
@@ -306,7 +307,7 @@ function socketHandler(server) {
         });
         // 퇴장
         socket.on("disconnect", () => {
-            console.log("아웃");
+            console.log("============퇴장2", dmuser);
             let userId;
             let roomIds;
             for (const roomId in dmuser) {
@@ -315,25 +316,24 @@ function socketHandler(server) {
                     roomIds = roomId;
                     userId = dmuser[roomId][socket.id].userId;
                     userSeq = dmuser[roomId][socket.id].u_seq;
-
-
                     let message = `${userId}님이 퇴장 하셨습니다.`;
                     io.to(`dm_room_${roomId}`).emit("message", { message: message, out: userId });
                 }
             }
 
-
-            console.log(dmuser[roomIds][socket.id]);
-            delete dmuser[roomIds][socket.id];
-            DM.update(
-                {
-                    last_seq: userSeq,
-                },
-                {
-                    where: { d_seq: roomIds },
-                }
-            );
-
+            // console.log(dmuser[roomIds][socket.id]);
+            if (dmuser.length > 0) {
+                console.log("=================dmuser", dmuser);
+                delete dmuser[roomIds][socket.id];
+                DM.update(
+                    {
+                        last_seq: userSeq,
+                    },
+                    {
+                        where: { d_seq: roomIds },
+                    }
+                );
+            }
         });
 
 
@@ -416,7 +416,8 @@ function socketHandler(server) {
         });
 
         //퇴장
-        socket.on("disconnect", () => {
+        socket.on("disconnect", async () => {
+            console.log("============퇴장3", nickInfo);
             // 퇴장한 플레이어의 소켓 ID
             if (nickInfo[socket.id])
                 io.emit("notice1", `${nickInfo[socket.id]}님이 퇴장하셨습니다.`);
@@ -429,6 +430,38 @@ function socketHandler(server) {
             if (disconnectedPlayerIndex !== -1) {
                 players.splice(disconnectedPlayerIndex, 1); // (해당 인덱스에서 하나만 삭제)
                 io.emit("updateUserId", players);
+            }
+        });
+
+        // 퇴장시 게임 인원 변동
+        socket.on("leaveRoom", async ({ g_seq }) => {
+            try {
+                const gameInfo = await Game.findOne({
+                    where: { g_seq },
+                });
+                const new_total = gameInfo.g_total - 1;
+
+                if (new_total <= 0) {
+                    const game = await Game.destroy({
+                        where: {
+                            g_seq,
+                        },
+                    });
+                    if (game) console.log("게임방 삭제");
+                    else console.log("게임방 삭제 실패");
+                } else {
+                    await Game.update(
+                        {
+                            g_total: new_total,
+                        },
+                        {
+                            where: { g_seq },
+                        }
+                    );
+                    console.log("게임방 인원이 감소");
+                }
+            } catch (error) {
+                console.error(error);
             }
         });
     });

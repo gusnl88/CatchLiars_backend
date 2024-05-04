@@ -9,6 +9,7 @@ function socketHandler(server) {
         },
     });
 
+    const nickInfo = {};
     const players = [];
     const dmuser = {};
     // {socket.id:닉네임1, socket.id: 닉네임2}
@@ -22,20 +23,18 @@ function socketHandler(server) {
         console.log("Client connected");
 
         socket.on("joinRoom", ({ roomId, userId }) => {
-          
-                socket.join(`room_${roomId}`);
-                if (!userList[roomId]) {
-                    userList[roomId] = {}; // roomId를 키로 가지는 객체 생성
-                }
-                userList[roomId][socket.id] = { userId, roomId }; // roomId 안에 socket.id를 키로 가지는 객체 생성
-                console.log("유저리스트", userList);
-                console.log(`환영합니다 ${userId} room_${roomId}`);
-                const message = `${userId}님이 room_${roomId}방에 입장하셨습니다.`;
+            socket.join(`room_${roomId}`);
+            if (!userList[roomId]) {
+                userList[roomId] = {}; // roomId를 키로 가지는 객체 생성
+            }
+            userList[roomId][socket.id] = { userId, roomId }; // roomId 안에 socket.id를 키로 가지는 객체 생성
+            console.log("유저리스트", userList);
+            console.log(`환영합니다 ${userId} room_${roomId}`);
+            const message = `${userId}님이 room_${roomId}방에 입장하셨습니다.`;
 
-                io.to(`room_${roomId}`).emit("userList", getUserList(roomId));
+            io.to(`room_${roomId}`).emit("userList", getUserList(roomId));
 
-                socket.broadcast.to(`room_${roomId}`).emit("message", { message, type: "message" });
-            
+            socket.broadcast.to(`room_${roomId}`).emit("message", { message, type: "message" });
         });
 
         socket.on("message", ({ roomId, dm, msg }) => {
@@ -228,48 +227,47 @@ function socketHandler(server) {
             return userLists;
         }
 
-
         // -------------------------------------------------------------------dm방
-        // dm방 입장 
-        socket.on("room",({roomId,userId})=>{
+        // dm방 입장
+        socket.on("room", ({ roomId, userId }) => {
             socket.join(`dm_room_${roomId}`);
-            let message=`${userId}님이 입장하셨습니다.`
-            if(!dmuser[roomId]){
-                dmuser[roomId]=[];
+            let message = `${userId}님이 입장하셨습니다.`;
+            if (!dmuser[roomId]) {
+                dmuser[roomId] = [];
             }
-            dmuser[roomId][socket.id]={userId}
-            console.log(dmuser)
-            io.to(`dm_room_${roomId}`).emit("message", {message:message});
-
-        })
-         socket.on("send", async ({msg,roomId,loginUser}) => {
+            dmuser[roomId][socket.id] = { userId };
+            console.log(dmuser);
+            io.to(`dm_room_${roomId}`).emit("message", { message: message });
+        });
+        socket.on("send", async ({ msg, roomId, loginUser }) => {
             console.log(msg);
             console.log(loginUser);
-            
+
             // msgData={myNick, dm, msg}
-            let newMessage=`${loginUser} : ${msg}`
-            io.to(`dm_room_${roomId}`).emit("message",{message:newMessage,sendUser:loginUser});
+            let newMessage = `${loginUser} : ${msg}`;
+            io.to(`dm_room_${roomId}`).emit("message", {
+                message: newMessage,
+                sendUser: loginUser,
+            });
         });
         // 퇴장
         socket.on("disconnect", () => {
-            console.log("아웃")
+            console.log("아웃");
             for (const roomId in dmuser) {
                 if (dmuser[roomId][socket.id]) {
-                    console.log(dmuser[roomId][socket.id].userId)
-                    const userId=dmuser[roomId][socket.id].userId;
-                    let message=`${userId}님이 퇴장 하셨습니다.`
-                    io.to(`dm_room_${roomId}`).emit("message", {message:message,out:userId});
-                            }
-                        }            
+                    console.log(dmuser[roomId][socket.id].userId);
+                    const userId = dmuser[roomId][socket.id].userId;
+                    let message = `${userId}님이 퇴장 하셨습니다.`;
+                    io.to(`dm_room_${roomId}`).emit("message", { message: message, out: userId });
+                }
+            }
         });
-
-       
 
         ///////////////////////////////////////////
         // catchLiar
 
         socket.on("drawing", (data) => {
-            console.log("Received drawing data:", data);
+            // console.log("Received drawing data:", data);
             io.emit("drawing2", data);
         });
 
@@ -313,6 +311,10 @@ function socketHandler(server) {
         // 클라이언트로부터의 게임 데이터 업데이트 요청 처리
         socket.on("gamestart", (gameStarted) => {
             io.emit("start", gameStarted);
+        });
+
+        socket.on("modal", (data) => {
+            io.emit("modal", data);
         });
 
         socket.on("updateGameData", (data) => {

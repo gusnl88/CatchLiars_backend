@@ -230,6 +230,7 @@ function socketHandler(server) {
 
         // -------------------------------------------------------------------dm방
         // dm방 입장
+
         socket.on("room", async ({ roomId, userId, u_seq }) => {
             socket.join(`dm_room_${roomId}`);
             let message = `${userId}님이 입장하셨습니다.`;
@@ -300,6 +301,7 @@ function socketHandler(server) {
                 is_read: message.is_read,
                 create_at: message.create_at,
 
+
             });
         });
         // 퇴장
@@ -314,10 +316,12 @@ function socketHandler(server) {
                     userId = dmuser[roomId][socket.id].userId;
                     userSeq = dmuser[roomId][socket.id].u_seq;
 
+
                     let message = `${userId}님이 퇴장 하셨습니다.`;
                     io.to(`dm_room_${roomId}`).emit("message", { message: message, out: userId });
                 }
             }
+
 
             console.log(dmuser[roomIds][socket.id]);
             delete dmuser[roomIds][socket.id];
@@ -332,11 +336,12 @@ function socketHandler(server) {
 
         });
 
+
         ///////////////////////////////////////////
         // catchLiar
 
         socket.on("drawing", (data) => {
-            console.log("Received drawing data:", data);
+            // console.log("Received drawing data:", data);
             io.emit("drawing2", data);
         });
 
@@ -380,6 +385,10 @@ function socketHandler(server) {
         // 클라이언트로부터의 게임 데이터 업데이트 요청 처리
         socket.on("gamestart", (gameStarted) => {
             io.emit("start", gameStarted);
+        });
+
+        socket.on("modal", (data) => {
+            io.emit("modal", data);
         });
 
         socket.on("updateGameData", (data) => {

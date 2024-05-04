@@ -4,12 +4,12 @@ const passport = require("passport");
 
 // dm방 전체목록 조회
 exports.getDM = async (req, res) => {
-    console.log('진입')
+    console.log("진입");
     try {
         const user = req.user.dataValues;
-        console.log(user)
+        console.log(user);
         if (user) {
-            console.log("ㅇㅇㅇㅇㅇㅇ")
+            console.log("ㅇㅇㅇㅇㅇㅇ");
             // 사용자의 u_seq와 f_seq가 모두 해당하는 DM을 찾음
             const userDM = await DM.findAll({
                 where: {
@@ -20,7 +20,7 @@ exports.getDM = async (req, res) => {
                 },
                 order: [["d_seq", "DESC"]],
             });
-            console.log(userDM,"userdm")
+            console.log(userDM, "userdm");
 
             // 상대방의 정보를 userDM 배열에 추가
             for (const DM of userDM) {
@@ -45,8 +45,7 @@ exports.getDM = async (req, res) => {
         console.error("Error fetching data:", error);
         return res.status(500).json({ message: "Internal server error" });
     }
-}
-
+};
 
 // DM방 1개 선택 및 지난 메시지 목록 조회
 exports.getDMOne = async (req, res) => {

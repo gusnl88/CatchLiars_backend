@@ -301,6 +301,8 @@ function socketHandler(server) {
                 sendUser: loginUser,
                 is_read: message.is_read,
                 create_at: message.create_at,
+
+
             });
         });
         // 퇴장
@@ -314,7 +316,6 @@ function socketHandler(server) {
                     roomIds = roomId;
                     userId = dmuser[roomId][socket.id].userId;
                     userSeq = dmuser[roomId][socket.id].u_seq;
-
                     let message = `${userId}님이 퇴장 하셨습니다.`;
                     io.to(`dm_room_${roomId}`).emit("message", { message: message, out: userId });
                 }
@@ -334,6 +335,7 @@ function socketHandler(server) {
                 );
             }
         });
+
 
         ///////////////////////////////////////////
         // catchLiar

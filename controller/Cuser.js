@@ -196,6 +196,7 @@ exports.patchUserProfile = async (req, res) => {
 
 exports.patchUserImage = async (req, res) => {
     try {
+        console.log(req.file);
         const loggedInUserID = req.user.dataValues.id;
         const userIDFromClient = req.body.id;
 
@@ -204,14 +205,14 @@ exports.patchUserImage = async (req, res) => {
         }
 
         const updatedUser = {
-            image: req.file ? req.file.path : null, // 파일이 있으면 경로 저장, 없으면 null
+            image: req.file ? req.file.path : null,
         };
 
         await User.update(updatedUser, { where: { id: loggedInUserID } });
-        req.session.data.image = updatedUser.image;
+        res.status(200).send("프로필 이미지가 업데이트되었습니다.");
     } catch (error) {
         console.error("프로필 이미지 업데이트 실패", error);
-        return res.status(500).send("프로필 이미지 업데이트 실패");
+        res.status(500).send("프로필 이미지 업데이트에 실패했습니다.");
     }
 };
 

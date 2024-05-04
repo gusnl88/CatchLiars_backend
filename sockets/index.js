@@ -1,7 +1,6 @@
 const { where } = require("sequelize");
 const { Message, User, DM } = require("../models");
 const { Op } = require("sequelize");
-
 const socketIO = require("socket.io");
 
 function socketHandler(server) {
@@ -263,6 +262,7 @@ function socketHandler(server) {
             io.to(`dm_room_${roomId}`).emit("msgList", msgList);
             if (Object.keys(dmuser[roomId]).length === 2) {
             }
+
             dmuser[roomId][socket.id] = { userId, u_seq };
             console.log(dmuser);
             socket.broadcast.to(`dm_room_${roomId}`).emit("message", { message: message });
@@ -272,6 +272,7 @@ function socketHandler(server) {
             console.log(loginUser);
             const currentTime = new Date().toISOString();
             console.log(Object.keys(dmuser[roomId]).length);
+
             const dmuserLength = Object.keys(dmuser[roomId]).length;
             let message = [];
             if (dmuserLength === 2) {
@@ -298,6 +299,7 @@ function socketHandler(server) {
                 sendUser: loginUser,
                 is_read: message.is_read,
                 create_at: message.create_at,
+
             });
         });
         // 퇴장
@@ -311,10 +313,12 @@ function socketHandler(server) {
                     roomIds = roomId;
                     userId = dmuser[roomId][socket.id].userId;
                     userSeq = dmuser[roomId][socket.id].u_seq;
+
                     let message = `${userId}님이 퇴장 하셨습니다.`;
                     io.to(`dm_room_${roomId}`).emit("message", { message: message, out: userId });
                 }
             }
+
             console.log(dmuser[roomIds][socket.id]);
             delete dmuser[roomIds][socket.id];
             DM.update(
@@ -325,6 +329,7 @@ function socketHandler(server) {
                     where: { d_seq: roomIds },
                 }
             );
+
         });
 
         ///////////////////////////////////////////

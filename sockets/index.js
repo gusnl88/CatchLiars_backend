@@ -305,33 +305,29 @@ function socketHandler(server) {
         });
         // 퇴장
         socket.on("disconnect", () => {
-            console.log("============퇴장2", dmuser);
+            console.log("아웃");
             let userId;
-            let roomIds;
+            let userSeq;
             for (const roomId in dmuser) {
                 if (dmuser[roomId][socket.id]) {
                     console.log(dmuser[roomId][socket.id].userId);
-                    roomIds = roomId;
                     userId = dmuser[roomId][socket.id].userId;
                     userSeq = dmuser[roomId][socket.id].u_seq;
                     let message = `${userId}님이 퇴장 하셨습니다.`;
                     io.to(`dm_room_${roomId}`).emit("message", { message: message, out: userId });
+                    delete dmuser[roomId][socket.id];
+                    DM.update(
+                        {
+                            last_seq: userSeq,
+                        },
+                        {
+                            where: { d_seq: roomId },
+                        }
+                    );
                 }
             }
-
-            // console.log(dmuser[roomIds][socket.id]);
-            if (dmuser[roomIds][socket.id]) {
-                delete dmuser[roomIds][socket.id];
-                DM.update(
-                    {
-                        last_seq: userSeq,
-                    },
-                    {
-                        where: { d_seq: roomIds },
-                    }
-                );
-            }
         });
+        
 
         ///////////////////////////////////////////
         // catchLiar

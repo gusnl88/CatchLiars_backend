@@ -301,8 +301,6 @@ function socketHandler(server) {
                 sendUser: loginUser,
                 is_read: message.is_read,
                 create_at: message.create_at,
-
-
             });
         });
         // 퇴장
@@ -322,8 +320,7 @@ function socketHandler(server) {
             }
 
             // console.log(dmuser[roomIds][socket.id]);
-            if (dmuser.length > 0) {
-                console.log("=================dmuser", dmuser);
+            if (dmuser[roomIds][socket.id]) {
                 delete dmuser[roomIds][socket.id];
                 DM.update(
                     {
@@ -335,7 +332,6 @@ function socketHandler(server) {
                 );
             }
         });
-
 
         ///////////////////////////////////////////
         // catchLiar

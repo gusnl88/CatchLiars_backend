@@ -327,15 +327,25 @@ function socketHandler(server) {
                 }
             }
         });
-        
 
         ///////////////////////////////////////////
         // catchLiar
 
         socket.on("drawing", (data) => {
             // console.log("Received drawing data:", data);
-            io.emit("drawing2", data);
+            socket.broadcast.emit("drawing2", data);
         });
+        // const drawData = {};
+
+        // socket.on("drawData1", (data) => {
+        //     drawData["drawData1"] = data;
+        // });
+
+        // socket.on("drawData2", (data) => {
+        //     drawData["drawData2"] = data;
+
+        //     socket.broadcast.emit("drawing", drawData);
+        // });
 
         const MAX_PLAYERS = 6; // 최대 플레이어 수
 

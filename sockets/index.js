@@ -375,7 +375,7 @@ function socketHandler(server) {
         });
 
         ////////////////
-        // 클라이언트로부터의 게임 데이터 업데이트 요청 처리
+        // 게임 데이터 업데이트
         socket.on("gamestart", (gameStarted) => {
             io.emit("start", gameStarted);
         });
@@ -395,6 +395,10 @@ function socketHandler(server) {
 
         socket.on("wordData", (data) => {
             io.emit("wordData", data);
+        });
+
+        socket.on("winner", (data) => {
+            io.emit("winner", data);
         });
 
         ///////////////////////////////////////////////////////////////

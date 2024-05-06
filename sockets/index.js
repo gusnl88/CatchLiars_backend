@@ -363,27 +363,18 @@ function socketHandler(server) {
                 (player) => player.socketId === socket.id || player.id === loginUser.id
             );
             if (isPlayerExist) {
-                // 이미 존재하는 플레이어라면 에러 메시지 전송
-                // socket.emit("userError", "잘못된 경로입니다.");
             } else {
-                // 존재하지 않는 경우, 새로운 플레이어를 추가
                 players.push(player);
-                // console.log(">>", players);
                 const currentPlayers = players.length;
                 if (currentPlayers > MAX_PLAYERS) {
-                    // 만약 최대 플레이어 수를 초과하면 에러 메시지를 전송합니다.
                     socket.emit("errorMsg", "최대 플레이어 수를 초과하여 입장할 수 없습니다.");
-                    return; // 함수 실행 종료
+                    return;
                 }
                 io.emit("updateUserId", players);
             }
-
-            // Object.values(nickInfo)= ['닉네임1','닉네임2']
-            // if (Object.values(player).includes(socket.id)) {
         });
 
         ////////////////
-        let gameData;
         // 클라이언트로부터의 게임 데이터 업데이트 요청 처리
         socket.on("gamestart", (gameStarted) => {
             io.emit("start", gameStarted);
@@ -396,6 +387,14 @@ function socketHandler(server) {
         socket.on("updateGameData", (data) => {
             // console.log(">>>", data);
             io.emit("updateGameData", data);
+        });
+
+        socket.on("liarData", (data) => {
+            io.emit("liarData", data);
+        });
+
+        socket.on("wordData", (data) => {
+            io.emit("wordData", data);
         });
 
         ///////////////////////////////////////////////////////////////
@@ -415,6 +414,10 @@ function socketHandler(server) {
                 nick: msgData.nick,
                 message: msgData.msg,
             });
+        });
+
+        socket.on("CatchVote", (votedUser) => {
+            io.emit("voteUpdate", votedUser);
         });
 
         //퇴장

@@ -123,10 +123,10 @@ function socketHandler(server) {
                     });
                     io.to(`room_${roomId}`).emit("message", {
                         message,
-                        type: "messeage",
+                        type: "message",
                         dm: "dm",
                     });
-                    io.to(`room_${roomId}`).emit("victory", userIdList);
+                    io.to(`room_${roomId}`).emit("victory", userIdList, mafiaList[roomId], "mafia");
                     resetMafiaCitizen(roomId);
                 } else if (mafiaList[roomId].length === 0) {
                     message = "시민이 승리했습니다.수고하셧습니다"; // 시민이 승리했을 경우 로직
@@ -137,10 +137,10 @@ function socketHandler(server) {
                     });
                     io.to(`room_${roomId}`).emit("message", {
                         message,
-                        type: "messeage",
+                        type: "message",
                         dm: "dm",
                     });
-                    io.to(`room_${roomId}`).emit("victory", userIdList);
+                    io.to(`room_${roomId}`).emit("victory", userIdList, citizen[roomId], "citizen");
                     resetMafiaCitizen(roomId);
                 } else {
                     // 게임을 계속 진행합니다.

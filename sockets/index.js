@@ -401,17 +401,21 @@ function socketHandler(server) {
             io.emit("winner", data);
         });
 
-        socket.on("ctx", (data) => {
-            io.emit("ctx", data);
-        });
+        // socket.on("ctx", (data) => {
+        //     io.emit("ctx", data);
+        // });
 
-        socket.on("round", (data) => {
-            io.emit("round", data);
-        });
+        // socket.on("round", (data) => {
+        //     io.emit("round", data);
+        // });
 
-        socket.on("current", (data) => {
-            io.emit("current", data);
-        });
+        // socket.on("current", (data) => {
+        //     io.emit("current", data);
+        // });
+
+        // socket.on("timerCount", (data) => {
+        //     io.emit("timerCount", data);
+        // });
 
         ///////////////////////////////////////////////////////////////
         // 채팅

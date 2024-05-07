@@ -22,28 +22,15 @@ const LocalStrategy = require("passport-local").Strategy; // 로그인 진행 �
 const socketHandler = require("./sockets");
 const bcrypt = require("bcrypt");
 
-// body-parser 설정
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-app.use(cookieParser());
-app.use(
-    cors({
-        origin: true, // 클라이언트의 주소
-        credentials: true, // 쿠키 허용
-    })
-);
-
-app.use("/uploads", express.static(__dirname + "/uploads"));
-
 // session middleware
 app.use(
     session({
         secret: "secretKey",
         resave: false,
-        saveUninitialized: false,
+        saveUninitialized: true,
         cookie: {
             maxAge: 1000 * 60 * 60,
-            httpOnly: true,
+            secure: false,
         },
     })
 );
@@ -52,36 +39,48 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session()); // session을 이용하여 passport를 동작
 
+app.use(cookieParser());
+app.use(
+    cors({
+        origin: true, // 클라이언트의 주소
+        credentials: true, // 쿠키 허용
+    })
+);
+
+// body-parser 설정
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+app.use("/uploads", express.static(__dirname + "/uploads"));
+
 passport.use(
     // 로그인 검증
     new LocalStrategy(
         { usernameField: "inputId", passwordField: "inputPw" },
         async (inputId, inputPw, cb) => {
-            // cb(에러, 성공값, 실패값)
-            const user = await User.findOne({
-                where: {
-                    id: inputId,
-                },
-            });
-            if (user) {
-                // 일치하는 아이디가 있는 경우에만 비밀번호 확인
-                // 입력한 비밀번호와 DB에 저장된 암호화된 비밀번호를 비교
-                const isCorrect = await bcrypt.compare(inputPw, user.pw);
-                if (isCorrect) {
-                    // 비밀번호 일치
-                    const userInfo = await User.findOne({
-                        where: {
-                            id: inputId,
-                        },
-                    });
-                    if (userInfo) cb(null, userInfo);
-                } else {
-                    cb(null, false, { message: "비밀번호가 일치하지 않습니다." });
-                }
-            } else {
-                cb(null, false, {
-                    message: "입력하신 아이디는 존재하지 않는 아이디입니다. id를 다시 확인해주세요",
+            try {
+                const user = await User.findOne({
+                    where: {
+                        id: inputId,
+                    },
                 });
+
+                if (!user) {
+                    return cb(null, false, {
+                        message:
+                            "입력하신 아이디는 존재하지 않는 아이디입니다. id를 다시 확인해주세요",
+                    });
+                }
+
+                const isCorrect = await bcrypt.compare(inputPw, user.pw);
+                if (!isCorrect) {
+                    return cb(null, false, { message: "비밀번호가 일치하지 않습니다." });
+                }
+
+                // 로그인 성공
+                return cb(null, user);
+            } catch (err) {
+                return cb(err);
             }
         }
     )
@@ -90,22 +89,48 @@ passport.use(
 // 로그인 성공시, 유저 정보를 session에 저장
 // 초기 로그인 시에 실행
 passport.serializeUser((user, cb) => {
+    console.log("========user.id", user.id);
     cb(null, user.id); // 로그인 성공시 deserializeUser에 user.id 전송
 });
 
-// session에 저장된 사용자 정보 검증
-// 매 요청시에 실행
-passport.deserializeUser(async (inputId, cb) => {
+passport.deserializeUser(async (id, cb) => {
+    console.log("deserializeUser", id);
     try {
         const user = await User.findOne({
             where: {
-                id: inputId,
+                id: id,
             },
         });
         if (user) cb(null, user); // db에서 해당 유저를 찾아서 리턴
     } catch (err) {
         console.log(err);
+        cb(err);
     }
+});
+
+// 세션 만료 확인 미들웨어 (어떠한 요청이 있을 때마다 실행됨)
+app.use(async (req, res, next) => {
+    if (req.isAuthenticated() && req.session.user) {
+        if (req.session.cookie.expires < new Date()) {
+            const u_seq = req.user.dataValues.u_seq; // 세션이 만료된 유저의 u_seq
+            req.session.destroy();
+            req.logout(); // Passport에서 로그아웃 처리
+            try {
+                await User.update(
+                    {
+                        connect: 0,
+                    },
+                    {
+                        where: { u_seq: u_seq },
+                    }
+                );
+                return res.send(true);
+            } catch {
+                return res.status(500).send("server error");
+            }
+        }
+    }
+    next();
 });
 
 // route 설정

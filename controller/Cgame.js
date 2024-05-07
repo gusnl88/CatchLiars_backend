@@ -5,9 +5,8 @@ const { Game } = require("../models");
 // post /games
 exports.postGame = async (req, res) => {
     const { title, pw, type } = req.body;
-    // const nowUser = req.session.passport; // 현재 유저 확인
-    if (req.user.dataValues.id) {
-        try {
+    try {
+        if (req.session.user.u_seq) {
             const gameInfo = await Game.create({
                 g_seq: null,
                 g_title: title,
@@ -15,12 +14,9 @@ exports.postGame = async (req, res) => {
                 g_type: type,
             });
             return res.send(gameInfo);
-        } catch (error) {
-            console.log("error", error);
-            return res.status(500).send("server error");
         }
-    } else {
-        return res.send("로그인이 필요합니다.");
+    } catch {
+        return res.status(401).send("로그인이 필요합니다");
     }
 };
 
@@ -66,9 +62,9 @@ exports.getSearch = async (req, res) => {
 exports.patchGameSetting = async (req, res) => {
     const { g_seq } = req.params;
     const { title, pw } = req.body;
-    const nowUser = req.session.passport; // 현재 유저 확인
-    if (nowUser.user === req.user.dataValues.id) {
-        try {
+
+    try {
+        if (req.session.user.u_seq) {
             await Game.update(
                 {
                     g_title: title,
@@ -79,11 +75,9 @@ exports.patchGameSetting = async (req, res) => {
                 }
             );
             return res.send(true);
-        } catch {
-            return res.status(500).send("server error");
         }
-    } else {
-        return res.send("로그인이 필요합니다.");
+    } catch {
+        return res.status(401).send("로그인이 필요합니다");
     }
 };
 

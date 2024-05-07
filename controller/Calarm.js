@@ -4,20 +4,17 @@ const passport = require("passport");
 // 알람목록 & 알람이 뜰 id를 가져오기
 exports.getAlarm = async (req, res) => {
     try {
-        if (req.user.dataValues.u_seq) {
+        if (req.session.user.u_seq) {
             // 해당 사용자의 알람 목록 조회
             const alarms = await Alarm.findAll({
                 where: {
-                    u_seq: req.user.dataValues.u_seq, // 현재 사용자의 u_seq와 일치하는 알람들을 조회
+                    u_seq: req.session.user.u_seq, // 현재 사용자의 u_seq와 일치하는 알람들을 조회
                 },
             });
             return res.send(alarms);
-        } else {
-            return res.status(401).send("Unauthorized");
         }
-    } catch (error) {
-        console.error(error);
-        return res.status(500).send("Server Error");
+    } catch {
+        return res.status(401).send("로그인이 필요합니다");
     }
 };
 

@@ -327,7 +327,6 @@ function socketHandler(server) {
                 }
             }
         });
-        
 
         ///////////////////////////////////////////
         // catchLiar

@@ -59,6 +59,9 @@ router.patch("/stateTrue", controller.patchStateTrue);
 // 유저 로그아웃 접속 업데이트
 router.patch("/stateFalse", controller.patchStateFalse);
 
+// 유저 세션 확인
+router.get("/check", controller.getSession);
+
 // 프로필 목록
 router.get("/myPage", controller.getProfile);
 

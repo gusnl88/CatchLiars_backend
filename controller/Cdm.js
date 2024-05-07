@@ -6,10 +6,8 @@ const passport = require("passport");
 exports.getDM = async (req, res) => {
     console.log("진입");
     try {
-        const user = req.user.dataValues;
-        console.log(user);
+        const user = req.session.user;
         if (user) {
-            console.log("ㅇㅇㅇㅇㅇㅇ");
             // 사용자의 u_seq와 f_seq가 모두 해당하는 DM을 찾음
             const userDM = await DM.findAll({
                 where: {
@@ -43,7 +41,7 @@ exports.getDM = async (req, res) => {
         }
     } catch (error) {
         console.error("Error fetching data:", error);
-        return res.status(500).json({ message: "Internal server error" });
+        return res.status(401).send("로그인이 필요합니다");
     }
 };
 
@@ -51,8 +49,8 @@ exports.getDM = async (req, res) => {
 exports.getDMOne = async (req, res) => {
     const { d_seq } = req.body; // URL에서 d_seq 추출
     try {
-        if (req.user.dataValues) {
-            const currentUser = req.user.dataValues; // 현재 사용자 정보
+        if (req.session.user) {
+            const currentUser = req.session.user; // 현재 사용자 정보
 
             // DM 방 조회
             const userDM = await DM.findOne({
@@ -92,12 +90,9 @@ exports.getDMOne = async (req, res) => {
             }
 
             res.send({ userDM, messages });
-        } else {
-            res.status(401).send("Unauthorized");
         }
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Internal Server Error");
+    } catch {
+        return res.status(401).send("로그인이 필요합니다");
     }
 };
 
@@ -139,7 +134,7 @@ exports.postDM = async (req, res) => {
 // dm방 삭제
 exports.deleteDM = async (req, res) => {
     const { d_seq } = req.body;
-    const { u_seq } = req.user.dataValues; // 현재 사용자의 u_seq
+    const { u_seq } = req.session.user; // 현재 사용자의 u_seq
 
     try {
         // DM을 조회하여 해당 DM의 정보를 가져옴

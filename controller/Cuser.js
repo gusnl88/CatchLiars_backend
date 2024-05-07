@@ -64,10 +64,15 @@ exports.postSignin = (req, res, next) => {
             // 로그인 실패
             return res.send(false);
         }
-        req.logIn(userInfo, (loginErr) => {
+        req.login(userInfo, (loginErr) => {
             if (loginErr) {
                 next(loginErr);
             }
+            req.session.user = {
+                u_seq: userInfo.u_seq,
+                id: userInfo.id,
+                nickname: userInfo.nickname,
+            };
             return res.status(200).json(userInfo);
         });
     })(req, res, next); // authenticate()는 미들웨어 함수를 반환함
@@ -76,55 +81,60 @@ exports.postSignin = (req, res, next) => {
 // 로그인시 접속 상태 변경
 exports.patchStateTrue = async (req, res) => {
     // const nowUser = req.session.passport; // 현재 유저 확인
-    if (req.user.dataValues.id) {
-        try {
+    try {
+        if (req.session.user.u_seq) {
             await User.update(
                 {
                     connect: 1,
                 },
                 {
-                    where: { u_seq: req.user.dataValues.u_seq },
+                    where: { u_seq: req.session.user.u_seq },
                 }
             );
             return res.send(true);
-        } catch {
-            return res.status(500).send("server error");
         }
-    } else {
-        return res.send("로그인이 필요합니다.");
+    } catch {
+        return res.status(401).send("로그인이 필요합니다");
     }
 };
 
 // 로그아웃시 접속 상태 변경
 exports.patchStateFalse = async (req, res) => {
-    // const nowUser = req.session.passport; // 현재 유저 확인
-    if (req.user) {
-        try {
+    try {
+        if (req.session.user) {
             await User.update(
                 {
                     connect: 0,
                 },
                 {
-                    where: { u_seq: req.user.dataValues.u_seq },
+                    where: { u_seq: req.session.user.u_seq },
                 }
             );
             return res.send(true);
-        } catch {
-            return res.status(500).send("server error");
         }
+    } catch {
+        return res.status(401).send("로그인이 필요합니다");
+    }
+};
+
+// 유저 세션 확인
+exports.getSession = (req, res) => {
+    if (req.isAuthenticated() && req.session.user) {
+        res.status(200).json(req.session.user);
     } else {
-        return res.send("로그인이 필요합니다.");
+        // 세션이 만료된 경우 또는 로그인되지 않은 경우
+        res.status(200).json({});
     }
 };
 
 // 로그아웃
 exports.getLogout = (req, res) => {
-    console.log("로그아웃하는 유저 세션 정보", req.session.passport);
+    console.log("로그아웃하는 유저 세션 정보", req.session.user);
     req.logout((err) => {
         if (err) {
             return res.send(false);
         }
-        // 로그아웃 성공(현재의 세션상태를 session에 저장한 후 리다이렉트)
+        // 로그아웃 성공(현재의 세션상태를 session에 저장)
         req.session.save((err) => {
             return res.send(true);
         });
@@ -134,25 +144,23 @@ exports.getLogout = (req, res) => {
 // mypage관련
 exports.getProfile = async (req, res) => {
     try {
-        if (req.user.dataValues.id) {
+        if (req.session.user.u_seq) {
             const userInfo = await User.findOne({
                 where: {
-                    u_seq: req.user.dataValues.u_seq,
+                    u_seq: req.session.user.u_seq,
                 },
             });
             if (userInfo) return res.send(userInfo);
             else return res.status(404).json({ message: "사용자 정보를 찾을 수 없습니다." });
-        } else {
-            return res.status(401).json({ message: "로그인이 필요합니다." });
         }
-    } catch (error) {
-        return res.status(500).json({ message: "프로필 조회 실패" });
+    } catch {
+        return res.status(401).send("로그인이 필요합니다");
     }
 };
 
 exports.patchUserProfile = async (req, res) => {
     try {
-        const loggedInUserID = req.user.dataValues.id;
+        const loggedInUserID = req.session.user.id;
         const userIDFromClient = req.body.id;
 
         if (loggedInUserID !== userIDFromClient) {
@@ -189,15 +197,14 @@ exports.patchUserProfile = async (req, res) => {
 
         return res.send(true);
     } catch (error) {
-        console.error("프로필 정보 업데이트 실패", error);
-        return res.status(500).send("프로필 정보 업데이트 실패");
+        console.log("error::", error);
+        return res.status(401).send("로그인이 필요합니다");
     }
 };
 
 exports.patchUserImage = async (req, res) => {
     try {
-        console.log(req.file);
-        const loggedInUserID = req.user.dataValues.id;
+        const loggedInUserID = req.session.user.id;
         const userIDFromClient = req.body.id;
 
         if (loggedInUserID !== userIDFromClient) {
@@ -205,20 +212,20 @@ exports.patchUserImage = async (req, res) => {
         }
 
         const updatedUser = {
-            image: req.file ? req.file.path : null,
+            image: req.file ? req.file.path : null, // 파일이 있으면 경로 저장, 없으면 null
         };
 
         await User.update(updatedUser, { where: { id: loggedInUserID } });
-        res.status(200).send("프로필 이미지가 업데이트되었습니다.");
+        req.session.data.image = updatedUser.image;
     } catch (error) {
         console.error("프로필 이미지 업데이트 실패", error);
-        res.status(500).send("프로필 이미지 업데이트에 실패했습니다.");
+        return res.status(500).send("프로필 이미지 업데이트 실패");
     }
 };
 
 // 탈퇴하기
 exports.deleteUser = async (req, res) => {
-    const loggedInUserID = req.user.dataValues.id;
+    const loggedInUserID = req.session.user.id;
     const userIDFromClient = req.body.id;
     const currentPassword = req.body.currentPassword; // 클라이언트에서 현재 비밀번호 받기
 

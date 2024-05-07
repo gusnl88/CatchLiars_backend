@@ -376,7 +376,30 @@ function socketHandler(server) {
 
         ////////////////
         // 게임 데이터 업데이트
-        socket.on("gamestart", (gameStarted) => {
+        socket.on("gamestart", async (gameStarted, g_seq) => {
+            console.log("=============gamestart", gameStarted, g_seq);
+            if (gameStarted) {
+                // 게임 시작
+                await Game.update(
+                    {
+                        g_state: 0, // 진입불가
+                    },
+                    {
+                        where: { g_seq },
+                    }
+                );
+            } else {
+                // 게임 끝
+                await Game.update(
+                    {
+                        g_state: 1, // 진입가능
+                    },
+                    {
+                        where: { g_seq },
+                    }
+                );
+            }
+
             io.emit("start", gameStarted);
         });
 

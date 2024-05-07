@@ -122,7 +122,7 @@ exports.postDM = async (req, res) => {
             });
             return res.send(newDM);
         } else {
-            return res.status(400).send("DM room already exists.");
+            return res.send(existingDM);
         }
     } catch (err) {
         console.error(err);

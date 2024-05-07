@@ -1,4 +1,4 @@
-const { Invitation, Friend, User } = require("../models");
+const { Invitation, Friend, User, Game } = require("../models");
 
 // 초대 발송
 exports.postInvitation = async (req, res) => {
@@ -56,7 +56,7 @@ exports.postInvitation = async (req, res) => {
 
 // 초대 수락
 exports.acceptInvitation = async (req, res) => {
-    const { f_seq, type } = req.body; // 수신자, 초대 유형
+    const { f_seq, type, g_seq } = req.body; // 수신자, 초대 유형
 
     try {
         if (f_seq === req.session.user.id) {
@@ -86,6 +86,18 @@ exports.acceptInvitation = async (req, res) => {
                         c_seq: req.session.user.u_seq,
                     });
                     return res.send(true);
+                }
+            } else {
+                // 게임 초대 수락시, 존재하는 게임방인지 확인
+                const game = Game.findOne({
+                    where: {
+                        g_seq,
+                    },
+                });
+                if (game) {
+                    return res.send(g_seq);
+                } else {
+                    return res.send(false);
                 }
             }
         }

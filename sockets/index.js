@@ -262,12 +262,18 @@ function socketHandler(server) {
             });
             console.log(msgList);
             io.to(`dm_room_${roomId}`).emit("msgList", msgList);
-            if (Object.keys(dmuser[roomId]).length === 2) {
-            }
 
             dmuser[roomId][socket.id] = { userId, u_seq };
             console.log(dmuser);
             socket.broadcast.to(`dm_room_${roomId}`).emit("message", { message: message });
+            const dmRoom = await DM.findOne({ where: roomId });
+
+            if (dmRoom.last_seq != u_seq) {
+                await DM.update(
+                    { unreadcnt: 0 }, // 업데이트할 필드와 값을 설정합니다.
+                    { where: { d_seq: roomId } } // 업데이트할 레코드를 선택합니다.
+                );
+            }
         });
         socket.on("send", async ({ msg, roomId, loginUser, u_seq }) => {
             console.log(msg);
@@ -330,15 +336,17 @@ function socketHandler(server) {
                     userSeq = dmuser[roomId][socket.id].u_seq;
                     let message = `${userId}님이 퇴장 하셨습니다.`;
                     io.to(`dm_room_${roomId}`).emit("message", { message: message, out: userId });
+                    if (Object.keys(dmuser[roomId]).length === 1) {
+                        DM.update(
+                            {
+                                last_seq: userSeq,
+                            },
+                            {
+                                where: { d_seq: roomId },
+                            }
+                        );
+                    }
                     delete dmuser[roomId][socket.id];
-                    DM.update(
-                        {
-                            last_seq: userSeq,
-                        },
-                        {
-                            where: { d_seq: roomId },
-                        }
-                    );
                 }
             }
         });

@@ -292,6 +292,21 @@ function socketHandler(server) {
                     create_at: currentTime,
                     content: msg,
                 });
+                const res = await DM.findOne({
+                    where: { d_seq: roomId },
+                });
+
+                if (res) {
+                    const unreadCnt = res.unreadcnt + 1; // unreadcnt 값에 1을 더합니다.
+                    console.log(unreadCnt);
+
+                    await DM.update(
+                        { unreadcnt: unreadCnt, updatedAt: new Date() }, // unreadcnt 값을 1 증가시킵니다.
+                        { where: { d_seq: roomId } }
+                    );
+                } else {
+                    console.log("No record found for roomID:", roomId);
+                }
             }
             console.log(message.is_read ? "읽었어" : "안읽었어");
             // msgData={myNick, dm, msg}

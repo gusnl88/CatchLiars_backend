@@ -12,7 +12,7 @@ const Alarm = (Sequelize, DataTypes) => {
                 type: DataTypes.INTEGER,
                 allowNull: false,
             },
-            coment: {
+            comment: {
                 type: DataTypes.CHAR(50),
                 allowNull: false,
             },

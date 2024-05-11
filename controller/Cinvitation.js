@@ -21,11 +21,9 @@ exports.postInvitation = async (req, res) => {
                 });
 
                 if (friend) {
-                    // 이미 친구인 경우
                     return res.send("이미 존재하는 친구입니다.");
                 }
             }
-            // 이미 초대를 보낸 경우
             const invitation = await Invitation.findOne({
                 where: {
                     f_seq: req.session.user.u_seq,
@@ -76,19 +74,16 @@ exports.acceptInvitation = async (req, res) => {
                     return res.send("이미 존재하는 친구입니다.");
                 } else {
                     await Friend.create({
-                        // 수신자 친구생성
                         u_seq: req.session.user.u_seq,
                         c_seq: f_seq,
                     });
                     await Friend.create({
-                        // 송신자 친구생성
                         u_seq: f_seq,
                         c_seq: req.session.user.u_seq,
                     });
                     return res.send(true);
                 }
             } else {
-                // 게임 초대 수락시, 존재하는 게임방인지 확인
                 const game = Game.findOne({
                     where: {
                         g_seq,
@@ -127,7 +122,6 @@ exports.deleteInvitation = async (req, res) => {
 };
 
 // 초대 목록 조회
-// get /invites/list
 exports.getInvitation = async (req, res) => {
     try {
         if (req.session.user.u_seq) {

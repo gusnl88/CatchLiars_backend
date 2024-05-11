@@ -5,9 +5,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 const PORT = process.env.PORT;
 const { sequelize } = require("./models");
-const indexRouter = require("./routes");
 const userRouter = require("./routes/user");
-// const multerRouter = require("./middleware/upload");
 const gameRouter = require("./routes/game");
 const dmRouter = require("./routes/dm");
 const alarmRouter = require("./routes/alarm");
@@ -17,7 +15,7 @@ const serverPrefix = "/";
 const session = require("express-session");
 const cookieParser = require("cookie-parser");
 const passport = require("passport");
-const { User, Game, DM, Message, Alarm } = require("./models");
+const { User } = require("./models");
 const LocalStrategy = require("passport-local").Strategy; // 로그인 진행 방식
 const socketHandler = require("./sockets");
 const bcrypt = require("bcrypt");
@@ -37,7 +35,7 @@ app.use(
 
 // passport middleware
 app.use(passport.initialize());
-app.use(passport.session()); // session을 이용하여 passport를 동작
+app.use(passport.session());
 
 app.use(cookieParser());
 app.use(
@@ -77,7 +75,6 @@ passport.use(
                     return cb(null, false, { message: "비밀번호가 일치하지 않습니다." });
                 }
 
-                // 로그인 성공
                 return cb(null, user);
             } catch (err) {
                 return cb(err);
@@ -87,12 +84,11 @@ passport.use(
 );
 
 // 로그인 성공시, 유저 정보를 session에 저장
-// 초기 로그인 시에 실행
 passport.serializeUser((user, cb) => {
-    console.log("========user.id", user.id);
     cb(null, user.id); // 로그인 성공시 deserializeUser에 user.id 전송
 });
 
+// 매요청시 실행
 passport.deserializeUser(async (id, cb) => {
     console.log("deserializeUser", id);
     try {
@@ -101,20 +97,20 @@ passport.deserializeUser(async (id, cb) => {
                 id: id,
             },
         });
-        if (user) cb(null, user); // db에서 해당 유저를 찾아서 리턴
+        if (user) cb(null, user);
     } catch (err) {
         console.log(err);
         cb(err);
     }
 });
 
-// 세션 만료 확인 미들웨어 (어떠한 요청이 있을 때마다 실행됨)
+// 세션 만료 확인 미들웨어
 app.use(async (req, res, next) => {
     if (req.isAuthenticated() && req.session.user) {
         if (req.session.cookie.expires < new Date()) {
-            const u_seq = req.user.dataValues.u_seq; // 세션이 만료된 유저의 u_seq
+            const u_seq = req.user.dataValues.u_seq;
             req.session.destroy();
-            req.logout(); // Passport에서 로그아웃 처리
+            req.logout();
             try {
                 await User.update(
                     {
@@ -134,7 +130,6 @@ app.use(async (req, res, next) => {
 });
 
 // route 설정
-app.use(serverPrefix, indexRouter); // index.js
 app.use(serverPrefix + "users", userRouter);
 app.use(serverPrefix + "games", gameRouter);
 app.use(serverPrefix + "friends", friendRouter);
@@ -149,8 +144,7 @@ sequelize
         const server = app.listen(PORT, () => {
             console.log(`http://localhost:${PORT}`);
         });
-        // 수정된 부분: socketHandler 호출 시 server 객체 전달
-        socketHandler(server); // 여기서 socketHandler를 호출합니다.
+        socketHandler(server);
     })
     .catch((err) => {
         console.log(err);

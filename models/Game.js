@@ -26,7 +26,7 @@ const Game = (Sequelize, DataTypes) => {
                 defaultValue: 1,
             },
             g_state: {
-                type: DataTypes.BOOLEAN, // 0: 진입불가(게임진행상태), 1: 진입가능(대기상태)
+                type: DataTypes.BOOLEAN,
                 allowNull: false,
                 defaultValue: 1,
             },

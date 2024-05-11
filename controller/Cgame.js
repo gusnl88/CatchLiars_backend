@@ -2,7 +2,6 @@ const { Op } = require("sequelize");
 const { Game } = require("../models");
 
 // 게임방 생성
-// post /games
 exports.postGame = async (req, res) => {
     const { title, pw, type } = req.body;
     try {
@@ -21,7 +20,6 @@ exports.postGame = async (req, res) => {
 };
 
 // 게임방 전체 목록 조회
-// get /games/:type
 exports.getGame = async (req, res) => {
     const { type } = req.params; // 0: 캐치 라이어 1: 마피아
     try {
@@ -38,7 +36,6 @@ exports.getGame = async (req, res) => {
 };
 
 // 게임방 검색
-// get /games/search/:type?keyword=~
 exports.getSearch = async (req, res) => {
     try {
         const { keyword } = req.query;
@@ -58,7 +55,6 @@ exports.getSearch = async (req, res) => {
 };
 
 // 게임방 설정 변경
-// patch /games/setting/:g_seq
 exports.patchGameSetting = async (req, res) => {
     const { g_seq } = req.params;
     const { title, pw } = req.body;
@@ -82,7 +78,6 @@ exports.patchGameSetting = async (req, res) => {
 };
 
 // 게임방 인원 증가
-// patch /games/plus/:g_seq
 exports.patchPlus = async (req, res) => {
     const { g_seq } = req.params;
     try {
@@ -126,7 +121,6 @@ exports.patchPlus = async (req, res) => {
 };
 
 // 게임방 인원 감소
-// patch /games/minus/:g_seq
 exports.patchMinus = async (req, res) => {
     const { g_seq } = req.params;
     try {
@@ -160,7 +154,6 @@ exports.patchMinus = async (req, res) => {
 };
 
 // 게임방 상태 변경
-// patch /games/state/:g_seq
 exports.patchGameState = async (req, res) => {
     const { g_seq } = req.params;
     const { type } = req.body;
@@ -169,7 +162,7 @@ exports.patchGameState = async (req, res) => {
         // 게임중
         await Game.update(
             {
-                g_state: 0, // 진입불가
+                g_state: 0,
             },
             {
                 where: { g_seq },

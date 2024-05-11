@@ -16,24 +16,19 @@ const GameModel = require("./Game")(sequelize, Sequelize);
 const DmModel = require("./DM")(sequelize, Sequelize);
 const MessageModel = require("./Message")(sequelize, Sequelize);
 const AlarmModel = require("./Alarm")(sequelize, Sequelize);
+const FriendModel = require("./Friend")(sequelize, Sequelize);
+const InvitationModel = require("./Invitation")(sequelize, Sequelize);
 
-// foreignKey 연결
-// DM
 UserModel.hasMany(DmModel, { foreignKey: "u_seq" });
 DmModel.belongsTo(UserModel, { foreignKey: "u_seq" });
-UserModel.hasMany(DmModel, { foreignKey: "f_seq" });
-DmModel.belongsTo(UserModel, { foreignKey: "f_seq" });
-// Message
+
 DmModel.hasMany(MessageModel, { foreignKey: "d_seq", onDelete: "CASCADE" });
 MessageModel.belongsTo(DmModel, { foreignKey: "d_seq", onDelete: "CASCADE" });
 UserModel.hasMany(MessageModel, { foreignKey: "u_seq", onDelete: "CASCADE" }); // 여기서 수정
 MessageModel.belongsTo(UserModel, { foreignKey: "u_seq", onDelete: "CASCADE" }); // 여기서 수정
-// Alarm
+
 DmModel.hasMany(AlarmModel, { foreignKey: "d_seq", onDelete: "CASCADE" });
 AlarmModel.belongsTo(DmModel, { foreignKey: "d_seq", onDelete: "CASCADE" });
-
-const FriendModel = require("./Friend")(sequelize, Sequelize);
-const InvitationModel = require("./Invitation")(sequelize, Sequelize);
 
 UserModel.hasMany(FriendModel, {
     sourceKey: "u_seq",
@@ -41,7 +36,7 @@ UserModel.hasMany(FriendModel, {
 });
 
 FriendModel.belongsTo(UserModel, {
-    sourceKey: "u_seq",
+    target: "u_seq",
     foreignKey: "u_seq",
 });
 
@@ -51,7 +46,7 @@ UserModel.hasMany(InvitationModel, {
 });
 
 InvitationModel.belongsTo(UserModel, {
-    sourceKey: "u_seq",
+    target: "u_seq",
     foreignKey: "u_seq",
 });
 

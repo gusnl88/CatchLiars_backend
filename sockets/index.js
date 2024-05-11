@@ -326,7 +326,6 @@ function socketHandler(server) {
         });
         // 퇴장
         socket.on("disconnect", () => {
-            console.log("아웃");
             let userId;
             let userSeq;
             for (const roomId in dmuser) {

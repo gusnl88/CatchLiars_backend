@@ -14,7 +14,6 @@ exports.getFriend = async (req, res) => {
             const c_seqList = friendList.map((friend) => friend.dataValues.c_seq);
             let result = [];
             for (const c_seq of c_seqList) {
-                // 비동기 코드의 결과를 기다린 후 반복문 진행
                 const info = await User.findOne({
                     where: { u_seq: c_seq },
                 });
@@ -33,14 +32,12 @@ exports.deleteFriend = async (req, res) => {
 
     try {
         if (req.session.user.u_seq) {
-            // 삭제를 한 유저
             const friend1 = await Friend.destroy({
                 where: {
                     u_seq: req.session.user.u_seq,
                     c_seq: c_seq,
                 },
             });
-            // 삭제를 당한 유저
             const friend2 = await Friend.destroy({
                 where: {
                     u_seq: c_seq,
